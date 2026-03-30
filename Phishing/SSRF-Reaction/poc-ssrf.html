@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSRF - Zero-Trust Browser Reaction Test</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { color: #ff6600; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .test-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .test-group h2 { color: #00bfff; margin-top: 0; }
+        .payload-btn { background: #1a1a2e; color: #00ff41; border: 1px solid #00ff41; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 4px; font-family: monospace; }
+        .payload-btn:hover { background: #00ff41; color: #000; }
+        #output { background: #000; border: 2px solid #333; padding: 15px; margin-top: 20px; min-height: 100px; white-space: pre-wrap; }
+        .info { color: #888; font-size: 13px; }
+        input[type=text] { padding: 8px; background: #111; color: #0f0; border: 1px solid #333; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a2e; color: #00bfff; }
+        .status { padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .blocked { background: #330000; color: #ff4444; border: 1px solid #ff4444; }
+        .executed { background: #003300; color: #44ff44; border: 1px solid #44ff44; }
+        .warning { background: #332200; color: #ffaa00; border: 1px solid #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>[SSRF] Zero-Trust Browser Reaction Test</h1>
+    <p class="info">Tests browser-side SSRF protections — attempts to make the browser fetch internal/restricted resources via various techniques. A zero-trust browser should block requests to internal IPs, metadata endpoints, and dangerous URL schemes.</p>
+
+    <!-- Test 1: Internal IP Access -->
+    <div class="test-group">
+        <h2>Test 1: Internal IP / Localhost Access</h2>
+        <p class="info">Tests if the browser blocks fetch/XHR requests to internal network addresses.</p>
+        <button class="payload-btn" onclick="testInternalIP('http://127.0.0.1/')">127.0.0.1</button>
+        <button class="payload-btn" onclick="testInternalIP('http://localhost/')">localhost</button>
+        <button class="payload-btn" onclick="testInternalIP('http://0.0.0.0/')">0.0.0.0</button>
+        <button class="payload-btn" onclick="testInternalIP('http://[::1]/')">IPv6 ::1</button>
+        <button class="payload-btn" onclick="testInternalIP('http://192.168.1.1/')">192.168.1.1</button>
+        <button class="payload-btn" onclick="testInternalIP('http://10.0.0.1/')">10.0.0.1</button>
+        <button class="payload-btn" onclick="testInternalIP('http://172.16.0.1/')">172.16.0.1</button>
+        <div id="internal-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 2: Cloud Metadata -->
+    <div class="test-group">
+        <h2>Test 2: Cloud Metadata Endpoint Access</h2>
+        <p class="info">Tests access to cloud provider metadata endpoints (AWS, GCP, Azure).</p>
+        <button class="payload-btn" onclick="testMetadata('http://169.254.169.254/latest/meta-data/')">AWS IMDS v1</button>
+        <button class="payload-btn" onclick="testMetadata('http://169.254.169.254/latest/api/token')">AWS IMDS v2 Token</button>
+        <button class="payload-btn" onclick="testMetadata('http://metadata.google.internal/computeMetadata/v1/')">GCP Metadata</button>
+        <button class="payload-btn" onclick="testMetadata('http://169.254.169.254/metadata/instance?api-version=2021-02-01')">Azure IMDS</button>
+        <button class="payload-btn" onclick="testMetadata('http://169.254.170.2/v2/credentials/')">AWS ECS Credentials</button>
+        <div id="metadata-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 3: URL Scheme Abuse -->
+    <div class="test-group">
+        <h2>Test 3: URL Scheme / Protocol Abuse</h2>
+        <p class="info">Tests dangerous URL schemes that could be used for SSRF.</p>
+        <button class="payload-btn" onclick="testScheme('file:///etc/passwd')">file:// (passwd)</button>
+        <button class="payload-btn" onclick="testScheme('file:///etc/shadow')">file:// (shadow)</button>
+        <button class="payload-btn" onclick="testScheme('file:///C:/Windows/System32/drivers/etc/hosts')">file:// (Win hosts)</button>
+        <button class="payload-btn" onclick="testScheme('gopher://127.0.0.1:6379/_INFO')">gopher:// (Redis)</button>
+        <button class="payload-btn" onclick="testScheme('dict://127.0.0.1:6379/INFO')">dict:// (Redis)</button>
+        <button class="payload-btn" onclick="testScheme('ftp://127.0.0.1/')">ftp://</button>
+        <button class="payload-btn" onclick="testScheme('data:text/html,<script>alert(1)</script>')">data: (script)</button>
+        <div id="scheme-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 4: IP Encoding Bypass -->
+    <div class="test-group">
+        <h2>Test 4: IP Encoding / Obfuscation Bypass</h2>
+        <p class="info">Tests alternative IP representations that may bypass allowlist/blocklist filters.</p>
+        <button class="payload-btn" onclick="testIPBypass('http://2130706433/')">Decimal (127.0.0.1)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://0x7f000001/')">Hex (127.0.0.1)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://0177.0.0.1/')">Octal (127.0.0.1)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://127.1/')">Shortened (127.1)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://127.0.0.1.nip.io/')">DNS Rebind (nip.io)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://0/')">Zero (0)</button>
+        <button class="payload-btn" onclick="testIPBypass('http://[0:0:0:0:0:ffff:127.0.0.1]/')">IPv6-mapped IPv4</button>
+        <div id="bypass-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 5: Redirect-based SSRF -->
+    <div class="test-group">
+        <h2>Test 5: Redirect-Based SSRF</h2>
+        <p class="info">Tests if the browser follows redirects from external URLs to internal addresses.</p>
+        <label style="color:#888;">Redirect URL (should 302 to internal IP):</label>
+        <input type="text" id="redirect-url" value="https://httpbin.org/redirect-to?url=http://169.254.169.254/latest/meta-data/">
+        <button class="payload-btn" onclick="testRedirectSSRF()">Test Redirect SSRF</button>
+        <button class="payload-btn" onclick="testRedirectIframe()">Test via Iframe</button>
+        <div id="redirect-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Test 6: Resource Embedding -->
+    <div class="test-group">
+        <h2>Test 6: Resource Embedding (IMG, IFRAME, LINK, OBJECT)</h2>
+        <p class="info">Tests if HTML elements can load internal resources.</p>
+        <button class="payload-btn" onclick="testEmbed('img', 'http://127.0.0.1/')">IMG → localhost</button>
+        <button class="payload-btn" onclick="testEmbed('iframe', 'http://127.0.0.1/')">IFRAME → localhost</button>
+        <button class="payload-btn" onclick="testEmbed('link', 'http://169.254.169.254/')">LINK → metadata</button>
+        <button class="payload-btn" onclick="testEmbed('object', 'http://127.0.0.1/')">OBJECT → localhost</button>
+        <button class="payload-btn" onclick="testEmbed('embed', 'file:///etc/passwd')">EMBED → file://</button>
+        <div id="embed-sink" style="margin-top:10px; background:#0a0a0a; border:2px dashed #333; padding:15px;"></div>
+    </div>
+
+    <!-- Test 7: DNS Rebinding -->
+    <div class="test-group">
+        <h2>Test 7: DNS Rebinding Simulation</h2>
+        <p class="info">DNS rebinding attacks resolve to a public IP first (passing checks), then to an internal IP. The browser should detect this.</p>
+        <label style="color:#888;">DNS Rebinding Domain (resolves to 127.0.0.1 after first request):</label>
+        <input type="text" id="rebind-domain" value="http://make-127-0-0-1-rr.1u.ms/">
+        <button class="payload-btn" onclick="testDNSRebind()">Test DNS Rebinding</button>
+        <div id="rebind-results" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="test-group">
+        <h2>Results Log</h2>
+        <table><thead><tr><th>#</th><th>Test</th><th>Target</th><th>Result</th><th>Browser Reaction</th></tr></thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <button class="payload-btn" onclick="exportResults()">Export Results</button>
+    </div>
+
+    <div id="output">[*] SSRF Reaction Tester Ready
+[*] Browser-side SSRF tests internal IP access, metadata endpoints, scheme abuse
+[*] Monitor Network tab for blocked/allowed requests
+</div>
+
+    <script>
+        var testCount = 0, results = [];
+        function log(msg) { var o = document.getElementById('output'); o.textContent += '\n' + new Date().toISOString().substr(11,8) + ' ' + msg; o.scrollTop = o.scrollHeight; }
+        function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function addResult(t, target, r, rx) {
+            testCount++;
+            results.push({num:testCount,test:t,target:target,result:r,reaction:rx,timestamp:new Date().toISOString()});
+            var tr = document.createElement('tr');
+            var cls = r==='REACHED'?'executed':r==='BLOCKED'?'blocked':'warning';
+            tr.innerHTML = '<td>'+testCount+'</td><td>'+t+'</td><td><code>'+escapeHtml(target.substring(0,60))+'</code></td><td><span class="status '+cls+'">'+r+'</span></td><td>'+rx+'</td>';
+            document.getElementById('results-body').appendChild(tr);
+        }
+
+        // Test 1: Internal IPs
+        function testInternalIP(url) {
+            log('[SSRF] Fetch → ' + url);
+            fetch(url, {mode:'no-cors'}).then(function(r) {
+                addResult('Internal IP', url, 'REACHED', 'Request sent (opaque response) — Status: ' + r.type);
+            }).catch(function(e) {
+                addResult('Internal IP', url, 'BLOCKED', e.message);
+            });
+            // Also try XHR
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onload = function() { log('[XHR] ' + url + ' → ' + xhr.status); };
+            xhr.onerror = function() { log('[XHR] ' + url + ' → blocked'); };
+            try { xhr.send(); } catch(ex) { log('[XHR] ' + url + ' → exception: ' + ex.message); }
+        }
+
+        // Test 2: Cloud Metadata
+        function testMetadata(url) {
+            log('[SSRF] Metadata → ' + url);
+            // Try with and without special headers
+            fetch(url, {mode:'no-cors'}).then(function(r) {
+                addResult('Cloud Metadata', url, 'REACHED', 'Request sent — type: ' + r.type);
+            }).catch(function(e) {
+                addResult('Cloud Metadata', url, 'BLOCKED', e.message);
+            });
+            // GCP requires special header
+            if (url.indexOf('google') !== -1) {
+                fetch(url, {headers:{'Metadata-Flavor':'Google'}, mode:'no-cors'}).then(function(r) {
+                    log('[SSRF] GCP with header → type: ' + r.type);
+                }).catch(function(e) {
+                    log('[SSRF] GCP with header → blocked: ' + e.message);
+                });
+            }
+        }
+
+        // Test 3: URL Schemes
+        function testScheme(url) {
+            log('[SSRF] Scheme → ' + url);
+            // Fetch
+            fetch(url).then(function(r) { return r.text(); }).then(function(t) {
+                addResult('URL Scheme', url, 'REACHED', 'Response length: ' + t.length);
+                log('[!] Content: ' + t.substring(0, 200));
+            }).catch(function(e) {
+                addResult('URL Scheme', url, 'BLOCKED', e.message);
+            });
+            // Also try via iframe for file:// and data:
+            if (url.startsWith('file:') || url.startsWith('data:')) {
+                var sink = document.getElementById('scheme-results');
+                sink.innerHTML += '<iframe src="'+url+'" style="width:100%;height:60px;border:1px solid #333;background:#000;" sandbox></iframe>';
+            }
+        }
+
+        // Test 4: IP Encoding
+        function testIPBypass(url) {
+            log('[SSRF] IP Bypass → ' + url);
+            fetch(url, {mode:'no-cors'}).then(function(r) {
+                addResult('IP Bypass', url, 'REACHED', 'Request sent — type: ' + r.type);
+            }).catch(function(e) {
+                addResult('IP Bypass', url, 'BLOCKED', e.message);
+            });
+        }
+
+        // Test 5: Redirect
+        function testRedirectSSRF() {
+            var url = document.getElementById('redirect-url').value;
+            log('[SSRF] Redirect → ' + url);
+            fetch(url, {mode:'no-cors', redirect:'follow'}).then(function(r) {
+                addResult('Redirect SSRF', url, 'REACHED', 'Redirect followed — type: ' + r.type);
+            }).catch(function(e) {
+                addResult('Redirect SSRF', url, 'BLOCKED', e.message);
+            });
+        }
+
+        function testRedirectIframe() {
+            var url = document.getElementById('redirect-url').value;
+            log('[SSRF] Redirect via iframe → ' + url);
+            var sink = document.getElementById('redirect-results');
+            sink.innerHTML = '<iframe src="'+url+'" style="width:100%;height:80px;border:1px solid #333;background:#000;"></iframe>';
+            addResult('Redirect Iframe', url, 'INJECTED', 'Iframe created — check if redirect to internal was followed');
+        }
+
+        // Test 6: Resource Embedding
+        function testEmbed(tag, url) {
+            log('[SSRF] ' + tag.toUpperCase() + ' → ' + url);
+            var sink = document.getElementById('embed-sink');
+            var el;
+            switch(tag) {
+                case 'img': el = '<img src="'+url+'" onerror="log(\'[EMBED] img failed\')" onload="log(\'[EMBED] img loaded!\')">'; break;
+                case 'iframe': el = '<iframe src="'+url+'" style="width:100%;height:60px;border:1px solid #333;"></iframe>'; break;
+                case 'link': el = '<link rel="stylesheet" href="'+url+'">'; document.head.innerHTML += el; el = '[link element added to head]'; break;
+                case 'object': el = '<object data="'+url+'" style="width:100%;height:60px;border:1px solid #333;"></object>'; break;
+                case 'embed': el = '<embed src="'+url+'" style="width:100%;height:60px;border:1px solid #333;">'; break;
+            }
+            if (tag !== 'link') sink.innerHTML += el;
+            addResult('Embed-' + tag, url, 'INJECTED', 'Element created — check network tab');
+        }
+
+        // Test 7: DNS Rebinding
+        function testDNSRebind() {
+            var url = document.getElementById('rebind-domain').value;
+            log('[SSRF] DNS Rebinding → ' + url);
+            // First request resolves to public IP, second to 127.0.0.1
+            fetch(url, {mode:'no-cors'}).then(function(r) {
+                log('[SSRF] First request: ' + r.type);
+                // Second request after TTL expires
+                setTimeout(function() {
+                    fetch(url, {mode:'no-cors'}).then(function(r2) {
+                        addResult('DNS Rebinding', url, 'REACHED', '2nd request type: ' + r2.type + ' — may have rebound to internal IP');
+                    }).catch(function(e2) {
+                        addResult('DNS Rebinding', url, 'BLOCKED', '2nd request blocked: ' + e2.message);
+                    });
+                }, 3000);
+                addResult('DNS Rebinding', url, 'PARTIAL', '1st request sent — waiting for rebind...');
+            }).catch(function(e) {
+                addResult('DNS Rebinding', url, 'BLOCKED', e.message);
+            });
+        }
+
+        function exportResults() {
+            var blob = new Blob([JSON.stringify(results, null, 2)], {type:'application/json'});
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ssrf-results-'+Date.now()+'.json'; a.click();
+        }
+
+        document.addEventListener('securitypolicyviolation', function(e) { log('[CSP] ' + e.violatedDirective + ' → ' + e.blockedURI); addResult('CSP', e.blockedURI, 'BLOCKED', e.violatedDirective); });
+    </script>
+</body>
+</html>

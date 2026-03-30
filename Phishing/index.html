@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zero-Trust Browser - Reaction Attack Testing Suite</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #c0c0c0; font-family: 'Courier New', monospace; padding: 30px; }
+        h1 { color: #ff6600; font-size: 28px; text-align: center; margin-bottom: 5px; }
+        .subtitle { color: #666; text-align: center; margin-bottom: 40px; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; max-width: 1200px; margin: 0 auto; }
+        .card { background: #111; border: 1px solid #333; border-radius: 10px; padding: 25px; transition: border-color 0.3s; }
+        .card:hover { border-color: #ff6600; }
+        .card h2 { color: #00bfff; font-size: 20px; margin-bottom: 10px; }
+        .card h2 span { font-size: 24px; margin-right: 8px; }
+        .card p { color: #888; font-size: 13px; line-height: 1.6; margin-bottom: 15px; }
+        .card ul { list-style: none; margin-bottom: 20px; }
+        .card ul li { padding: 6px 0; color: #aaa; font-size: 13px; }
+        .card ul li::before { content: ">>"; color: #00ff41; margin-right: 8px; }
+        .card a { display: inline-block; background: #1a1a2e; color: #00ff41; border: 1px solid #00ff41; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-family: monospace; margin: 3px; font-size: 13px; }
+        .card a:hover { background: #00ff41; color: #000; }
+        .header-bar { background: #111; border: 1px solid #333; border-radius: 10px; padding: 20px; max-width: 1200px; margin: 0 auto 25px; display: flex; justify-content: space-between; align-items: center; }
+        .header-bar .ip { color: #ff6600; }
+        .header-bar .date { color: #666; }
+        .status-ok { color: #00ff41; }
+        footer { text-align: center; color: #333; margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a1a; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>ZERO-TRUST BROWSER REACTION TESTING SUITE</h1>
+    <p class="subtitle">Authorized Security Testing Environment</p>
+
+    <div class="header-bar">
+        <span><span class="status-ok">[ONLINE]</span> Test Server Active</span>
+        <span class="date" id="date"></span>
+    </div>
+
+    <div class="grid">
+        <!-- Phishing -->
+        <div class="card">
+            <h2><span>01</span> Phishing</h2>
+            <p>Test browser reaction to credential harvesting pages, payment capture forms, and social engineering lures.</p>
+            <ul>
+                <li>Credential Harvesting (VeryGoodVault clone)</li>
+                <li>Fake Payment Portal with session capture</li>
+                <li>Social engineering trust indicators</li>
+            </ul>
+            <a href="/phishing/">Payment Capture PoC</a>
+        </div>
+
+        <!-- XSS -->
+        <div class="card">
+            <h2><span>02</span> Cross-Site Scripting (XSS)</h2>
+            <p>Comprehensive XSS testing across all 5 types. Tests script injection, DOM manipulation, encoding bypasses, and out-of-band callbacks.</p>
+            <ul>
+                <li>Reflected XSS - URL parameter and form injection</li>
+                <li>Stored XSS - Persistent payload rendering</li>
+                <li>DOM-Based XSS - Client-side sink/source chains</li>
+                <li>Blind XSS - Delayed execution in admin contexts</li>
+                <li>Self-XSS - Console paste and clipboard hijack</li>
+            </ul>
+            <a href="/xss/reflected/">Reflected XSS</a>
+            <a href="/xss/stored/">Stored XSS</a>
+            <a href="/xss/dom/">DOM-Based XSS</a>
+            <a href="/xss/blind/">Blind XSS</a>
+            <a href="/xss/self/">Self-XSS</a>
+        </div>
+
+        <!-- CSRF -->
+        <div class="card">
+            <h2><span>03</span> CSRF</h2>
+            <p>Test browser protections against cross-site request forgery including auto-submit forms, clickjacking overlays, and SameSite cookie bypass techniques.</p>
+            <ul>
+                <li>Auto-submitting POST/GET forms</li>
+                <li>XHR/Fetch with credentials</li>
+                <li>Clickjacking-assisted CSRF</li>
+                <li>SameSite cookie bypass</li>
+                <li>Content-type variations</li>
+            </ul>
+            <a href="/csrf/">CSRF Test Suite</a>
+            <a href="/csrf/password-reset.html">Password Reset PoC</a>
+        </div>
+
+        <!-- SSRF -->
+        <div class="card">
+            <h2><span>04</span> SSRF</h2>
+            <p>Test browser-side SSRF protections against internal IP access, cloud metadata endpoints, URL scheme abuse, and DNS rebinding.</p>
+            <ul>
+                <li>Internal IP / localhost access</li>
+                <li>Cloud metadata endpoints (AWS/GCP/Azure)</li>
+                <li>URL scheme abuse (file://, gopher://, dict://)</li>
+                <li>IP encoding bypass (decimal, hex, octal)</li>
+                <li>Redirect-based SSRF and DNS rebinding</li>
+            </ul>
+            <a href="/ssrf/">SSRF Test Suite</a>
+        </div>
+
+        <!-- Restricted Site Bypass -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2><span>05</span> Restricted Site Bypass via Iframe</h2>
+            <p>Test if the zero-trust browser's URL filtering can be bypassed to load restricted/blocked sites through iframe embedding, URL obfuscation, redirect chains, proxy services, dynamic JS creation, and delayed loading techniques.</p>
+            <ul>
+                <li>Direct iframe, object, embed, portal embedding</li>
+                <li>Sandbox attribute manipulation</li>
+                <li>URL obfuscation (encoding, case swap, trailing dot, @ userinfo)</li>
+                <li>Dynamic JS creation (createElement, innerHTML, Blob URL, srcdoc, data: URI)</li>
+                <li>Redirect chains (httpbin, meta refresh, Google Translate proxy, CORS proxy, Wayback)</li>
+                <li>Fetch + local render (bypasses URL from appearing in iframe src)</li>
+                <li>Delayed/lazy loading (setTimeout, IntersectionObserver, Service Worker)</li>
+                <li>Navigation bypass (window.open, anchor click, form POST, meta redirect)</li>
+            </ul>
+            <a href="/bypass/">Restricted Site Bypass Suite</a>
+        </div>
+    </div>
+
+    <footer>
+        Zero-Trust Browser Reaction Testing Suite | Authorized Testing Only
+    </footer>
+
+    <script>
+        document.getElementById('date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    </script>
+</body>
+</html>

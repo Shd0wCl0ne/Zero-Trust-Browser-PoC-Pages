@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DOM-Based XSS - Zero-Trust Browser Reaction Test</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { color: #ff6600; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .test-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .test-group h2 { color: #00bfff; margin-top: 0; }
+        .payload-btn { background: #1a1a2e; color: #00ff41; border: 1px solid #00ff41; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 4px; font-family: monospace; }
+        .payload-btn:hover { background: #00ff41; color: #000; }
+        #output { background: #000; border: 2px solid #333; padding: 15px; margin-top: 20px; min-height: 100px; white-space: pre-wrap; font-size: 14px; }
+        .sink { background: #1a0000; border: 2px dashed #ff4444; padding: 15px; margin: 10px 0; min-height: 40px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a2e; color: #00bfff; }
+        .status { padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .blocked { background: #330000; color: #ff4444; border: 1px solid #ff4444; }
+        .executed { background: #003300; color: #44ff44; border: 1px solid #44ff44; }
+        .warning { background: #332200; color: #ffaa00; border: 1px solid #ffaa00; }
+        code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>[DOM-BASED XSS] Zero-Trust Browser Reaction Test</h1>
+    <p style="color:#888;">Tests XSS that occurs entirely client-side via DOM manipulation — no server round-trip.</p>
+
+    <!-- Source: location.hash -->
+    <div class="test-group">
+        <h2>Test 1: location.hash Source → innerHTML Sink</h2>
+        <p style="color:#888;">DOM XSS via <code>window.location.hash</code> reflected into <code>innerHTML</code>.</p>
+        <button class="payload-btn" onclick="testHashSource('<img src=x onerror=alert(1)>')">IMG onerror</button>
+        <button class="payload-btn" onclick="testHashSource('<svg onload=alert(1)>')">SVG onload</button>
+        <button class="payload-btn" onclick="testHashSource('<details open ontoggle=alert(1)>')">details ontoggle</button>
+        <div class="sink" id="sink-hash">Hash content renders here...</div>
+    </div>
+
+    <!-- Source: document.referrer -->
+    <div class="test-group">
+        <h2>Test 2: document.referrer Source</h2>
+        <p style="color:#888;">Tests if <code>document.referrer</code> value can inject DOM XSS.</p>
+        <button class="payload-btn" onclick="testReferrerSource()">Inject Referrer</button>
+        <div class="sink" id="sink-referrer">Referrer: <span id="referrer-val"></span></div>
+    </div>
+
+    <!-- Source: postMessage -->
+    <div class="test-group">
+        <h2>Test 3: postMessage Source → innerHTML Sink</h2>
+        <p style="color:#888;">Tests cross-origin postMessage handler that writes to DOM without validation.</p>
+        <button class="payload-btn" onclick="testPostMessage('<img src=x onerror=alert(\"postMessage-XSS\")>')">Send postMessage</button>
+        <button class="payload-btn" onclick="testPostMessage('<svg onload=alert(\"postMessage-SVG\")>')">SVG via postMessage</button>
+        <div class="sink" id="sink-postmessage">Waiting for message...</div>
+    </div>
+
+    <!-- Sink: eval() -->
+    <div class="test-group">
+        <h2>Test 4: eval() Sink</h2>
+        <p style="color:#888;">Tests browser reaction when user input reaches <code>eval()</code>.</p>
+        <input type="text" id="eval-input" style="width:60%;padding:8px;background:#111;color:#0f0;border:1px solid #333;" value="alert('eval-XSS')">
+        <button class="payload-btn" onclick="testEvalSink()">Execute via eval()</button>
+        <button class="payload-btn" onclick="testFunctionConstructor()">Execute via Function()</button>
+        <button class="payload-btn" onclick="testSetTimeout()">Execute via setTimeout()</button>
+        <div class="sink" id="sink-eval">eval() results...</div>
+    </div>
+
+    <!-- Sink: document.location -->
+    <div class="test-group">
+        <h2>Test 5: URL/Location Manipulation</h2>
+        <p style="color:#888;">Tests <code>window.open()</code> and <code>location.assign()</code> with javascript: URIs.</p>
+        <button class="payload-btn" onclick="testWindowOpen()">window.open(javascript:)</button>
+        <button class="payload-btn" onclick="testLocationAssign()">location.assign(javascript:)</button>
+        <button class="payload-btn" onclick="testAnchorHref()">Anchor href injection</button>
+        <div class="sink" id="sink-location">Location test results...</div>
+    </div>
+
+    <!-- Sink: jQuery-like selectors -->
+    <div class="test-group">
+        <h2>Test 6: DOM Clobbering & Prototype Pollution</h2>
+        <p style="color:#888;">Tests advanced DOM manipulation techniques.</p>
+        <button class="payload-btn" onclick="testDOMClobbering()">DOM Clobbering</button>
+        <button class="payload-btn" onclick="testPrototypePollution()">Prototype Pollution</button>
+        <div class="sink" id="sink-advanced">Advanced test results...</div>
+    </div>
+
+    <!-- Results -->
+    <div class="test-group">
+        <h2>Results Log</h2>
+        <table>
+            <thead><tr><th>#</th><th>Source → Sink</th><th>Payload</th><th>Result</th><th>Browser Reaction</th></tr></thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <button class="payload-btn" onclick="exportResults()">Export Results</button>
+    </div>
+
+    <div id="output">[*] DOM-Based XSS Reaction Tester Ready
+[*] Try: poc-dom-xss.html#<img src=x onerror=alert(1)>
+[*] These attacks happen entirely in the browser — no server involvement
+</div>
+
+    <script>
+        var testCount = 0, results = [];
+        function log(msg) { var o = document.getElementById('output'); o.textContent += '\n' + new Date().toISOString().substr(11,8) + ' ' + msg; o.scrollTop = o.scrollHeight; }
+        function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function addResult(test, payload, result, reaction) {
+            testCount++;
+            results.push({num:testCount, test:test, payload:payload, result:result, reaction:reaction, timestamp:new Date().toISOString()});
+            var tbody = document.getElementById('results-body');
+            var tr = document.createElement('tr');
+            var cls = result === 'EXECUTED' ? 'executed' : result === 'BLOCKED' ? 'blocked' : 'warning';
+            tr.innerHTML = '<td>'+testCount+'</td><td>'+escapeHtml(test)+'</td><td><code>'+escapeHtml(payload.substring(0,60))+'</code></td><td><span class="status '+cls+'">'+result+'</span></td><td>'+reaction+'</td>';
+            tbody.appendChild(tr);
+        }
+
+        // Test 1: Hash source
+        function testHashSource(payload) {
+            log('[TEST] Hash → innerHTML: ' + payload);
+            window.location.hash = payload;
+            document.getElementById('sink-hash').innerHTML = decodeURIComponent(window.location.hash.substring(1));
+            addResult('hash → innerHTML', payload, 'INJECTED', 'Check if handler fired');
+        }
+
+        // Test 2: Referrer
+        function testReferrerSource() {
+            log('[TEST] document.referrer: ' + document.referrer);
+            document.getElementById('referrer-val').innerHTML = document.referrer || '(empty — open this page from a crafted referrer)';
+            addResult('referrer → innerHTML', document.referrer || 'empty', 'TESTED', 'Referrer value rendered');
+        }
+
+        // Test 3: postMessage
+        window.addEventListener('message', function(e) {
+            log('[MSG] Received postMessage: ' + e.data);
+            document.getElementById('sink-postmessage').innerHTML = e.data;
+        });
+        function testPostMessage(payload) {
+            log('[TEST] postMessage: ' + payload);
+            window.postMessage(payload, '*');
+            addResult('postMessage → innerHTML', payload, 'INJECTED', 'Message sent — no origin check');
+        }
+
+        // Test 4: eval
+        function testEvalSink() {
+            var code = document.getElementById('eval-input').value;
+            log('[TEST] eval(): ' + code);
+            try { eval(code); addResult('input → eval()', code, 'EXECUTED', 'eval() executed successfully'); }
+            catch(e) { addResult('input → eval()', code, 'BLOCKED', 'Error: ' + e.message); }
+        }
+        function testFunctionConstructor() {
+            var code = document.getElementById('eval-input').value;
+            log('[TEST] Function(): ' + code);
+            try { new Function(code)(); addResult('input → Function()', code, 'EXECUTED', 'Function constructor executed'); }
+            catch(e) { addResult('input → Function()', code, 'BLOCKED', 'Error: ' + e.message); }
+        }
+        function testSetTimeout() {
+            var code = document.getElementById('eval-input').value;
+            log('[TEST] setTimeout(): ' + code);
+            try { setTimeout(code, 0); addResult('input → setTimeout()', code, 'EXECUTED', 'setTimeout with string executed'); }
+            catch(e) { addResult('input → setTimeout()', code, 'BLOCKED', 'Error: ' + e.message); }
+        }
+
+        // Test 5: Location
+        function testWindowOpen() {
+            log('[TEST] window.open(javascript:)');
+            try { window.open("javascript:alert('windowopen-xss')", '_blank'); addResult('window.open()', 'javascript:alert()', 'EXECUTED', 'window.open with javascript: URI'); }
+            catch(e) { addResult('window.open()', 'javascript:alert()', 'BLOCKED', e.message); }
+        }
+        function testLocationAssign() {
+            log('[TEST] location.assign — will navigate away! Click only if ready.');
+            var sink = document.getElementById('sink-location');
+            sink.innerHTML = '<a href="javascript:alert(\'location-xss\')" id="loc-test-link">Click to test javascript: navigation</a>';
+            addResult('location.assign', 'javascript:alert()', 'INJECTED', 'Link created — click to test');
+        }
+        function testAnchorHref() {
+            log('[TEST] Anchor href injection');
+            var sink = document.getElementById('sink-location');
+            sink.innerHTML = '<a href="javascript:alert(\'anchor-xss\')">javascript: link</a> | <a href="data:text/html,<script>alert(1)</script>">data: link</a> | <a href="vbscript:alert(1)">vbscript: link</a>';
+            addResult('Anchor href', 'javascript:/data:/vbscript:', 'INJECTED', 'Multiple protocol links created');
+        }
+
+        // Test 6: Advanced
+        function testDOMClobbering() {
+            log('[TEST] DOM Clobbering');
+            var sink = document.getElementById('sink-advanced');
+            sink.innerHTML = '<form id="test-clobber"><input name="action" value="clobbered"></form>';
+            var form = document.getElementById('test-clobber');
+            var clobbered = form.action !== undefined && typeof form.action !== 'string';
+            addResult('DOM Clobbering', 'form.action clobber', clobbered ? 'EXECUTED' : 'WARNING', 'form.action type: ' + typeof form.action);
+        }
+        function testPrototypePollution() {
+            log('[TEST] Prototype Pollution');
+            try {
+                var obj = JSON.parse('{"__proto__":{"polluted":"yes"}}');
+                var test = {};
+                addResult('Prototype Pollution', '__proto__.polluted', test.polluted === 'yes' ? 'EXECUTED' : 'BLOCKED', 'test.polluted = ' + test.polluted);
+            } catch(e) { addResult('Prototype Pollution', '__proto__', 'BLOCKED', e.message); }
+        }
+
+        function exportResults() {
+            var blob = new Blob([JSON.stringify(results, null, 2)], {type:'application/json'});
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dom-xss-results-'+Date.now()+'.json'; a.click();
+        }
+
+        document.addEventListener('securitypolicyviolation', function(e) {
+            log('[CSP] ' + e.violatedDirective);
+            addResult('CSP', e.blockedURI, 'BLOCKED', e.violatedDirective);
+        });
+
+        // Auto-process hash on load
+        if (window.location.hash.length > 1) {
+            log('[*] Hash fragment detected — auto-injecting');
+            document.getElementById('sink-hash').innerHTML = decodeURIComponent(window.location.hash.substring(1));
+        }
+    </script>
+</body>
+</html>

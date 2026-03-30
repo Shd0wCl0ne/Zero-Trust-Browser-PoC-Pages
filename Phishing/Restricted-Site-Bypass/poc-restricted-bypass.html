@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Restricted Site Bypass - Zero-Trust Browser Reaction Test</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { color: #ff6600; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .test-group { background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .test-group h2 { color: #00bfff; margin-top: 0; font-size: 18px; }
+        .payload-btn { background: #1a1a2e; color: #00ff41; border: 1px solid #00ff41; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 4px; font-family: monospace; font-size: 13px; }
+        .payload-btn:hover { background: #00ff41; color: #000; }
+        .payload-btn.danger { border-color: #ff4444; color: #ff4444; }
+        .payload-btn.danger:hover { background: #ff4444; color: #000; }
+        #output { background: #000; border: 2px solid #333; padding: 15px; margin-top: 20px; min-height: 120px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+        .info { color: #888; font-size: 13px; line-height: 1.6; }
+        input[type=text] { padding: 8px; background: #111; color: #0f0; border: 1px solid #333; width: 100%; font-family: monospace; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; font-size: 13px; }
+        th { background: #1a1a2e; color: #00bfff; }
+        .status { padding: 4px 10px; border-radius: 3px; display: inline-block; font-size: 12px; }
+        .blocked { background: #330000; color: #ff4444; border: 1px solid #ff4444; }
+        .loaded { background: #003300; color: #44ff44; border: 1px solid #44ff44; }
+        .warning { background: #332200; color: #ffaa00; border: 1px solid #ffaa00; }
+        .sink { background: #0a0a0a; border: 2px dashed #333; padding: 10px; margin: 10px 0; min-height: 60px; overflow: hidden; }
+        .url-list { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+        .url-chip { background: #1a1a2e; color: #ccc; padding: 5px 12px; border-radius: 15px; font-size: 12px; border: 1px solid #333; cursor: pointer; }
+        .url-chip:hover { border-color: #ff6600; color: #ff6600; }
+    </style>
+</head>
+<body>
+    <h1>[RESTRICTED SITE BYPASS] Zero-Trust Browser Reaction Test</h1>
+    <p class="info">Tests whether a zero-trust browser's URL filtering / site blocking can be bypassed using iframe embedding, redirects, proxies, URL obfuscation, and other techniques. The browser should detect and block access to restricted URLs regardless of the embedding method.</p>
+
+    <!-- Target Configuration -->
+    <div class="test-group">
+        <h2>Target Configuration</h2>
+        <label style="color:#888;">Restricted URL to test against:</label>
+        <input type="text" id="target-url" value="https://darkforums.su/">
+        <div class="url-list">
+            <span class="url-chip" onclick="setTarget('https://darkforums.su/')">darkforums.su</span>
+            <span class="url-chip" onclick="setTarget('https://breachforums.st/')">breachforums.st</span>
+            <span class="url-chip" onclick="setTarget('https://exploit.in/')">exploit.in</span>
+            <span class="url-chip" onclick="setTarget('https://xss.is/')">xss.is</span>
+            <span class="url-chip" onclick="setTarget('https://raidforums.com/')">raidforums.com</span>
+            <span class="url-chip" onclick="setTarget('https://cracked.io/')">cracked.io</span>
+            <span class="url-chip" onclick="setTarget('https://nulled.to/')">nulled.to</span>
+        </div>
+        <p class="info">Click a chip or enter a custom URL. All tests will target this URL.</p>
+    </div>
+
+    <!-- Test 1: Direct Iframe Embedding -->
+    <div class="test-group">
+        <h2>Test 1: Direct Iframe Embedding</h2>
+        <p class="info">Basic iframe, object, embed, and frame elements loading the restricted URL directly.</p>
+        <button class="payload-btn" onclick="testDirectIframe()">iframe src=</button>
+        <button class="payload-btn" onclick="testDirectObject()">object data=</button>
+        <button class="payload-btn" onclick="testDirectEmbed()">embed src=</button>
+        <button class="payload-btn" onclick="testDirectFrameset()">frameset (deprecated)</button>
+        <button class="payload-btn" onclick="testPortal()">portal (experimental)</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-direct')">Clear</button>
+        <div class="sink" id="sink-direct"><em style="color:#666;">Embedding results appear here...</em></div>
+    </div>
+
+    <!-- Test 2: Iframe with Sandbox Attribute Manipulation -->
+    <div class="test-group">
+        <h2>Test 2: Iframe Sandbox Attribute Bypass</h2>
+        <p class="info">Tests if sandbox attribute values affect the browser's ability to detect restricted content.</p>
+        <button class="payload-btn" onclick="testSandbox('')">No sandbox</button>
+        <button class="payload-btn" onclick="testSandbox('sandbox')">sandbox (empty)</button>
+        <button class="payload-btn" onclick="testSandbox('sandbox=&quot;allow-scripts&quot;')">allow-scripts</button>
+        <button class="payload-btn" onclick="testSandbox('sandbox=&quot;allow-scripts allow-same-origin&quot;')">allow-scripts + same-origin</button>
+        <button class="payload-btn" onclick="testSandbox('sandbox=&quot;allow-scripts allow-same-origin allow-forms allow-popups&quot;')">full permissions</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-sandbox')">Clear</button>
+        <div class="sink" id="sink-sandbox"></div>
+    </div>
+
+    <!-- Test 3: Iframe src Obfuscation -->
+    <div class="test-group">
+        <h2>Test 3: URL Obfuscation in Iframe src</h2>
+        <p class="info">Tests if URL obfuscation techniques can bypass URL pattern matching in the browser's filter.</p>
+        <button class="payload-btn" onclick="testObfuscation('urlEncode')">URL Encode</button>
+        <button class="payload-btn" onclick="testObfuscation('doubleEncode')">Double URL Encode</button>
+        <button class="payload-btn" onclick="testObfuscation('unicodeEncode')">Unicode Escape</button>
+        <button class="payload-btn" onclick="testObfuscation('hexEncode')">Hex Entity Encode</button>
+        <button class="payload-btn" onclick="testObfuscation('caseSwap')">Case Swap</button>
+        <button class="payload-btn" onclick="testObfuscation('trailingDot')">Trailing Dot</button>
+        <button class="payload-btn" onclick="testObfuscation('atSign')">@ Userinfo</button>
+        <button class="payload-btn" onclick="testObfuscation('fragment')">Fragment Trick</button>
+        <button class="payload-btn" onclick="testObfuscation('backslash')">Backslash</button>
+        <button class="payload-btn" onclick="testObfuscation('tabNewline')">Tab/Newline Injection</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-obfuscation')">Clear</button>
+        <div class="sink" id="sink-obfuscation"></div>
+    </div>
+
+    <!-- Test 4: Dynamic Iframe Creation via JavaScript -->
+    <div class="test-group">
+        <h2>Test 4: Dynamic JavaScript Iframe Creation</h2>
+        <p class="info">Tests if dynamically created iframes via JS bypass the browser's static HTML analysis.</p>
+        <button class="payload-btn" onclick="testDynamicCreateElement()">createElement('iframe')</button>
+        <button class="payload-btn" onclick="testDynamicInnerHTML()">innerHTML injection</button>
+        <button class="payload-btn" onclick="testDynamicDocWrite()">document.write()</button>
+        <button class="payload-btn" onclick="testDynamicDOMParser()">DOMParser</button>
+        <button class="payload-btn" onclick="testDynamicBlob()">Blob URL iframe</button>
+        <button class="payload-btn" onclick="testDynamicSrcdoc()">srcdoc with meta refresh</button>
+        <button class="payload-btn" onclick="testDynamicDataURI()">data: URI iframe</button>
+        <button class="payload-btn" onclick="testDynamicAboutBlank()">about:blank + document.write</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-dynamic')">Clear</button>
+        <div class="sink" id="sink-dynamic"></div>
+    </div>
+
+    <!-- Test 5: Redirect / Proxy Chains -->
+    <div class="test-group">
+        <h2>Test 5: Redirect & Proxy Chain Bypass</h2>
+        <p class="info">Tests if intermediary redirects or web proxies can smuggle restricted content into an iframe.</p>
+        <button class="payload-btn" onclick="testRedirect('httpbin')">httpbin 302 redirect</button>
+        <button class="payload-btn" onclick="testRedirect('metaRefresh')">Meta refresh redirect</button>
+        <button class="payload-btn" onclick="testRedirect('jsRedirect')">JavaScript redirect</button>
+        <button class="payload-btn" onclick="testRedirect('googleCache')">Google Cache</button>
+        <button class="payload-btn" onclick="testRedirect('archive')">Wayback Machine</button>
+        <button class="payload-btn" onclick="testRedirect('translate')">Google Translate proxy</button>
+        <button class="payload-btn" onclick="testRedirect('corsProxy')">CORS proxy</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-redirect')">Clear</button>
+        <div class="sink" id="sink-redirect"></div>
+    </div>
+
+    <!-- Test 6: Fetch + Render -->
+    <div class="test-group">
+        <h2>Test 6: Fetch Content & Render Locally</h2>
+        <p class="info">Fetches restricted site content via JS and renders it locally — the iframe never loads the restricted URL directly.</p>
+        <button class="payload-btn" onclick="testFetchRender('direct')">Direct fetch()</button>
+        <button class="payload-btn" onclick="testFetchRender('noCors')">fetch no-cors</button>
+        <button class="payload-btn" onclick="testFetchRender('corsProxy')">CORS proxy fetch</button>
+        <button class="payload-btn" onclick="testFetchRender('xhr')">XMLHttpRequest</button>
+        <button class="payload-btn" onclick="testFetchRender('websocket')">WebSocket tunnel</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-fetch')">Clear</button>
+        <div class="sink" id="sink-fetch"></div>
+    </div>
+
+    <!-- Test 7: Timing / Delayed Load -->
+    <div class="test-group">
+        <h2>Test 7: Delayed & Conditional Loading</h2>
+        <p class="info">Tests if delaying the iframe load or using lazy-loading bypasses initial page scan.</p>
+        <button class="payload-btn" onclick="testDelayed(3000)">3s Delay</button>
+        <button class="payload-btn" onclick="testDelayed(10000)">10s Delay</button>
+        <button class="payload-btn" onclick="testLazy()">loading="lazy"</button>
+        <button class="payload-btn" onclick="testIntersectionObserver()">IntersectionObserver</button>
+        <button class="payload-btn" onclick="testServiceWorker()">Service Worker intercept</button>
+        <button class="payload-btn danger" onclick="clearSink('sink-delayed')">Clear</button>
+        <div class="sink" id="sink-delayed" style="min-height:100px;"></div>
+    </div>
+
+    <!-- Test 8: window.open / Tab Navigation -->
+    <div class="test-group">
+        <h2>Test 8: Navigation & Popup Bypass</h2>
+        <p class="info">Tests if window.open, location changes, or anchor clicks bypass the restriction.</p>
+        <button class="payload-btn" onclick="testWindowOpen()">window.open()</button>
+        <button class="payload-btn" onclick="testAnchorClick()">Anchor click()</button>
+        <button class="payload-btn" onclick="testLocationAssign()">location.assign()</button>
+        <button class="payload-btn" onclick="testFormAction()">Form action POST</button>
+        <button class="payload-btn" onclick="testMetaRedirect()">meta http-equiv refresh</button>
+    </div>
+
+    <!-- Results -->
+    <div class="test-group">
+        <h2>Results Log</h2>
+        <table>
+            <thead><tr><th>#</th><th>Technique</th><th>Method</th><th>Result</th><th>Browser Reaction</th></tr></thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <button class="payload-btn" onclick="exportResults()">Export Results (JSON)</button>
+        <button class="payload-btn" onclick="exportCSV()">Export Results (CSV)</button>
+    </div>
+
+    <div id="output">[*] Restricted Site Bypass Tester Ready
+[*] Target: https://darkforums.su/
+[*] Monitor: iframe load events, network tab, console warnings, browser alerts
+[*] A zero-trust browser SHOULD block ALL of these techniques
+</div>
+
+    <script>
+        var testCount = 0, results = [];
+        var TARGET = document.getElementById('target-url').value;
+
+        function setTarget(url) {
+            document.getElementById('target-url').value = url;
+            TARGET = url;
+            log('[*] Target changed to: ' + url);
+        }
+
+        function getTarget() {
+            TARGET = document.getElementById('target-url').value;
+            return TARGET;
+        }
+
+        function log(msg) {
+            var o = document.getElementById('output');
+            o.textContent += '\n' + new Date().toISOString().substr(11, 8) + ' ' + msg;
+            o.scrollTop = o.scrollHeight;
+        }
+
+        function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+        function addResult(technique, method, result, reaction) {
+            testCount++;
+            var row = { num: testCount, technique: technique, method: method, result: result, reaction: reaction, target: getTarget(), timestamp: new Date().toISOString() };
+            results.push(row);
+            var tbody = document.getElementById('results-body');
+            var tr = document.createElement('tr');
+            var cls = result === 'LOADED' ? 'loaded' : result === 'BLOCKED' ? 'blocked' : 'warning';
+            tr.innerHTML = '<td>' + testCount + '</td><td>' + escapeHtml(technique) + '</td><td><code>' + escapeHtml(method.substring(0, 50)) + '</code></td><td><span class="status ' + cls + '">' + result + '</span></td><td>' + escapeHtml(reaction) + '</td>';
+            tbody.appendChild(tr);
+        }
+
+        function clearSink(id) { document.getElementById(id).innerHTML = ''; }
+
+        function monitorIframe(iframe, technique, method) {
+            iframe.addEventListener('load', function () {
+                try {
+                    var doc = iframe.contentDocument || iframe.contentWindow.document;
+                    var title = doc.title || '(no title)';
+                    var bodyLen = doc.body ? doc.body.innerHTML.length : 0;
+                    if (bodyLen > 50) {
+                        log('[LOADED] ' + technique + ' — content rendered! Title: ' + title + ', Body: ' + bodyLen + ' chars');
+                        addResult(technique, method, 'LOADED', 'Content rendered — title: ' + title + ', body: ' + bodyLen + ' chars');
+                    } else {
+                        log('[PARTIAL] ' + technique + ' — iframe loaded but content minimal (' + bodyLen + ' chars)');
+                        addResult(technique, method, 'PARTIAL', 'Iframe loaded, minimal content: ' + bodyLen + ' chars');
+                    }
+                } catch (e) {
+                    log('[CROSS-ORIGIN] ' + technique + ' — iframe loaded but cross-origin blocks read');
+                    addResult(technique, method, 'PARTIAL', 'Loaded (cross-origin, cannot read content): ' + e.message);
+                }
+            });
+            iframe.addEventListener('error', function () {
+                log('[BLOCKED] ' + technique + ' — iframe load error');
+                addResult(technique, method, 'BLOCKED', 'Iframe error event fired');
+            });
+            // Timeout fallback
+            setTimeout(function () {
+                if (!results.find(function (r) { return r.technique === technique && r.method === method; })) {
+                    log('[TIMEOUT] ' + technique + ' — no load/error event after 8s');
+                    addResult(technique, method, 'BLOCKED', 'No load event — likely blocked silently');
+                }
+            }, 8000);
+        }
+
+        function makeIframe(src, sandbox) {
+            var f = document.createElement('iframe');
+            f.src = src;
+            f.style.cssText = 'width:100%;height:200px;border:1px solid #333;background:#000;';
+            if (sandbox) f.setAttribute('sandbox', sandbox);
+            return f;
+        }
+
+        // ========== Test 1: Direct Embedding ==========
+        function testDirectIframe() {
+            var url = getTarget();
+            log('[TEST] Direct iframe → ' + url);
+            var sink = document.getElementById('sink-direct');
+            var f = makeIframe(url);
+            sink.appendChild(f);
+            monitorIframe(f, 'Direct iframe', 'iframe src="' + url + '"');
+        }
+
+        function testDirectObject() {
+            var url = getTarget();
+            log('[TEST] object data → ' + url);
+            var sink = document.getElementById('sink-direct');
+            sink.innerHTML += '<object data="' + escapeHtml(url) + '" style="width:100%;height:200px;border:1px solid #333;"></object>';
+            addResult('Direct object', 'object data="..."', 'INJECTED', 'Check if object loaded restricted content');
+        }
+
+        function testDirectEmbed() {
+            var url = getTarget();
+            log('[TEST] embed src → ' + url);
+            var sink = document.getElementById('sink-direct');
+            sink.innerHTML += '<embed src="' + escapeHtml(url) + '" style="width:100%;height:200px;border:1px solid #333;">';
+            addResult('Direct embed', 'embed src="..."', 'INJECTED', 'Check if embed loaded restricted content');
+        }
+
+        function testDirectFrameset() {
+            var url = getTarget();
+            log('[TEST] frameset (via iframe srcdoc) → ' + url);
+            var sink = document.getElementById('sink-direct');
+            var f = document.createElement('iframe');
+            f.srcdoc = '<frameset><frame src="' + escapeHtml(url) + '"></frameset>';
+            f.style.cssText = 'width:100%;height:200px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'Frameset', 'frame src inside srcdoc');
+        }
+
+        function testPortal() {
+            var url = getTarget();
+            log('[TEST] portal element → ' + url);
+            var sink = document.getElementById('sink-direct');
+            try {
+                var p = document.createElement('portal');
+                p.src = url;
+                p.style.cssText = 'width:100%;height:200px;border:1px solid #333;';
+                sink.appendChild(p);
+                addResult('Portal', 'portal src="..."', 'INJECTED', 'Portal element created (experimental API)');
+            } catch (e) {
+                addResult('Portal', 'portal src="..."', 'BLOCKED', 'Portal not supported: ' + e.message);
+            }
+        }
+
+        // ========== Test 2: Sandbox Manipulation ==========
+        function testSandbox(sandboxAttr) {
+            var url = getTarget();
+            var label = sandboxAttr || 'no sandbox';
+            log('[TEST] Sandbox: ' + label + ' → ' + url);
+            var sink = document.getElementById('sink-sandbox');
+            var f = document.createElement('iframe');
+            f.src = url;
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;background:#000;';
+            if (sandboxAttr) {
+                var parts = sandboxAttr.split('=');
+                if (parts.length > 1) f.setAttribute('sandbox', parts[1].replace(/"/g, ''));
+                else f.setAttribute('sandbox', '');
+            }
+            sink.appendChild(f);
+            monitorIframe(f, 'Sandbox: ' + label, sandboxAttr || 'no sandbox attr');
+        }
+
+        // ========== Test 3: URL Obfuscation ==========
+        function testObfuscation(type) {
+            var url = getTarget();
+            var obfuscated = url;
+            var parsed = new URL(url);
+
+            switch (type) {
+                case 'urlEncode':
+                    obfuscated = parsed.protocol + '//' + encodeURIComponent(parsed.hostname) + parsed.pathname;
+                    break;
+                case 'doubleEncode':
+                    obfuscated = parsed.protocol + '//' + encodeURIComponent(encodeURIComponent(parsed.hostname)) + parsed.pathname;
+                    break;
+                case 'unicodeEncode':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname.split('').map(function (c) { return '\\u00' + c.charCodeAt(0).toString(16).padStart(2, '0'); }).join('') + parsed.pathname;
+                    break;
+                case 'hexEncode':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname.split('').map(function (c) { return '&#x' + c.charCodeAt(0).toString(16) + ';'; }).join('') + parsed.pathname;
+                    break;
+                case 'caseSwap':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname.split('').map(function (c, i) { return i % 2 ? c.toUpperCase() : c; }).join('') + parsed.pathname;
+                    break;
+                case 'trailingDot':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname + './' + parsed.pathname.substring(1);
+                    break;
+                case 'atSign':
+                    obfuscated = parsed.protocol + '//innocent-site.com@' + parsed.hostname + parsed.pathname;
+                    break;
+                case 'fragment':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname + parsed.pathname + '#@allowed-site.com';
+                    break;
+                case 'backslash':
+                    obfuscated = parsed.protocol + '//' + parsed.hostname + parsed.pathname.replace(/\//g, '\\');
+                    break;
+                case 'tabNewline':
+                    obfuscated = parsed.protocol + '//\t' + parsed.hostname + '\n' + parsed.pathname;
+                    break;
+            }
+
+            log('[TEST] URL Obfuscation (' + type + '): ' + obfuscated);
+            var sink = document.getElementById('sink-obfuscation');
+            var f = document.createElement('iframe');
+            f.src = obfuscated;
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;background:#000;';
+            f.title = type;
+            sink.appendChild(f);
+            monitorIframe(f, 'Obfuscation: ' + type, obfuscated.substring(0, 80));
+        }
+
+        // ========== Test 4: Dynamic JS Creation ==========
+        function testDynamicCreateElement() {
+            var url = getTarget();
+            log('[TEST] Dynamic createElement');
+            var sink = document.getElementById('sink-dynamic');
+            var f = document.createElement('iframe');
+            sink.appendChild(f);
+            // Set src AFTER appending to DOM
+            setTimeout(function () { f.src = url; f.style.cssText = 'width:100%;height:150px;border:1px solid #333;'; }, 100);
+            monitorIframe(f, 'Dynamic createElement', 'createElement then set src after append');
+        }
+
+        function testDynamicInnerHTML() {
+            var url = getTarget();
+            log('[TEST] Dynamic innerHTML');
+            var sink = document.getElementById('sink-dynamic');
+            sink.innerHTML += '<iframe src="' + escapeHtml(url) + '" style="width:100%;height:150px;border:1px solid #333;"></iframe>';
+            var frames = sink.querySelectorAll('iframe');
+            monitorIframe(frames[frames.length - 1], 'Dynamic innerHTML', 'innerHTML iframe injection');
+        }
+
+        function testDynamicDocWrite() {
+            var url = getTarget();
+            log('[TEST] Dynamic document.write in iframe');
+            var sink = document.getElementById('sink-dynamic');
+            var outer = document.createElement('iframe');
+            outer.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(outer);
+            try {
+                var doc = outer.contentDocument;
+                doc.open();
+                doc.write('<iframe src="' + url + '" style="width:100%;height:100%;border:none;"></iframe>');
+                doc.close();
+                addResult('Dynamic doc.write', 'nested iframe via document.write', 'INJECTED', 'Nested iframe written — check if inner loads');
+            } catch (e) { addResult('Dynamic doc.write', 'document.write', 'BLOCKED', e.message); }
+        }
+
+        function testDynamicDOMParser() {
+            var url = getTarget();
+            log('[TEST] DOMParser');
+            try {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString('<iframe src="' + url + '"></iframe>', 'text/html');
+                var f = doc.querySelector('iframe');
+                var sink = document.getElementById('sink-dynamic');
+                var imported = document.importNode(f, true);
+                imported.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+                sink.appendChild(imported);
+                monitorIframe(imported, 'DOMParser', 'parseFromString + importNode');
+            } catch (e) { addResult('DOMParser', 'parseFromString', 'BLOCKED', e.message); }
+        }
+
+        function testDynamicBlob() {
+            var url = getTarget();
+            log('[TEST] Blob URL iframe');
+            var html = '<!DOCTYPE html><html><body><iframe src="' + url + '" style="width:100%;height:100%;border:none;"></iframe></body></html>';
+            var blob = new Blob([html], { type: 'text/html' });
+            var blobURL = URL.createObjectURL(blob);
+            var sink = document.getElementById('sink-dynamic');
+            var f = document.createElement('iframe');
+            f.src = blobURL;
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'Blob URL', 'blob: URL wrapping restricted iframe');
+        }
+
+        function testDynamicSrcdoc() {
+            var url = getTarget();
+            log('[TEST] srcdoc with meta refresh');
+            var sink = document.getElementById('sink-dynamic');
+            var f = document.createElement('iframe');
+            f.srcdoc = '<html><head><meta http-equiv="refresh" content="0;url=' + url + '"></head><body>Redirecting...</body></html>';
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'srcdoc meta refresh', 'srcdoc → meta refresh → restricted URL');
+        }
+
+        function testDynamicDataURI() {
+            var url = getTarget();
+            log('[TEST] data: URI iframe');
+            var html = '<html><body><iframe src="' + url + '" style="width:100%;height:100%;border:none;"></iframe></body></html>';
+            var dataURI = 'data:text/html;base64,' + btoa(html);
+            var sink = document.getElementById('sink-dynamic');
+            var f = document.createElement('iframe');
+            f.src = dataURI;
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'data: URI', 'data:text/html wrapping restricted iframe');
+        }
+
+        function testDynamicAboutBlank() {
+            var url = getTarget();
+            log('[TEST] about:blank + document.write');
+            var sink = document.getElementById('sink-dynamic');
+            var f = document.createElement('iframe');
+            f.src = 'about:blank';
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(f);
+            f.addEventListener('load', function () {
+                try {
+                    f.contentDocument.write('<iframe src="' + url + '" style="width:100%;height:100%;border:none;"></iframe>');
+                    addResult('about:blank write', 'about:blank → document.write → restricted iframe', 'INJECTED', 'Written into about:blank — check if nested iframe loads');
+                } catch (e) { addResult('about:blank write', 'about:blank → document.write', 'BLOCKED', e.message); }
+            });
+        }
+
+        // ========== Test 5: Redirect / Proxy Chains ==========
+        function testRedirect(type) {
+            var url = getTarget();
+            var proxyUrl = url;
+            var sink = document.getElementById('sink-redirect');
+
+            switch (type) {
+                case 'httpbin':
+                    proxyUrl = 'https://httpbin.org/redirect-to?url=' + encodeURIComponent(url);
+                    break;
+                case 'metaRefresh':
+                    var html = '<html><head><meta http-equiv="refresh" content="0;url=' + url + '"></head></html>';
+                    proxyUrl = 'data:text/html;base64,' + btoa(html);
+                    break;
+                case 'jsRedirect':
+                    var html2 = '<html><body><script>window.location="' + url + '"<\/script></body></html>';
+                    proxyUrl = 'data:text/html;base64,' + btoa(html2);
+                    break;
+                case 'googleCache':
+                    proxyUrl = 'https://webcache.googleusercontent.com/search?q=cache:' + encodeURIComponent(url);
+                    break;
+                case 'archive':
+                    proxyUrl = 'https://web.archive.org/web/' + url;
+                    break;
+                case 'translate':
+                    var parsed = new URL(url);
+                    proxyUrl = 'https://translate.google.com/translate?sl=auto&tl=en&u=' + encodeURIComponent(url);
+                    break;
+                case 'corsProxy':
+                    proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                    break;
+            }
+
+            log('[TEST] Redirect (' + type + '): ' + proxyUrl.substring(0, 80));
+            var f = document.createElement('iframe');
+            f.src = proxyUrl;
+            f.style.cssText = 'width:100%;height:200px;border:1px solid #333;background:#000;';
+            sink.appendChild(f);
+            monitorIframe(f, 'Redirect: ' + type, proxyUrl.substring(0, 80));
+        }
+
+        // ========== Test 6: Fetch & Render ==========
+        function testFetchRender(type) {
+            var url = getTarget();
+            var fetchUrl = url;
+            var sink = document.getElementById('sink-fetch');
+
+            if (type === 'corsProxy') fetchUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+
+            log('[TEST] Fetch+Render (' + type + '): ' + fetchUrl.substring(0, 80));
+
+            if (type === 'websocket') {
+                addResult('WebSocket tunnel', 'ws:// proxy', 'MANUAL', 'Requires a WebSocket proxy server — test manually');
+                return;
+            }
+
+            var fetchOpts = type === 'noCors' ? { mode: 'no-cors' } : {};
+
+            if (type === 'xhr') {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', fetchUrl, true);
+                xhr.onload = function () {
+                    var f = document.createElement('iframe');
+                    f.srcdoc = xhr.responseText;
+                    f.style.cssText = 'width:100%;height:200px;border:1px solid #333;';
+                    sink.appendChild(f);
+                    log('[FETCHED] XHR response: ' + xhr.responseText.length + ' chars — rendered in srcdoc');
+                    addResult('Fetch+Render XHR', 'XHR → srcdoc', 'LOADED', 'Content fetched (' + xhr.responseText.length + ' chars) and rendered locally');
+                };
+                xhr.onerror = function () { addResult('Fetch+Render XHR', 'XHR', 'BLOCKED', 'XHR request failed (CORS)'); };
+                xhr.send();
+                return;
+            }
+
+            fetch(fetchUrl, fetchOpts).then(function (r) {
+                if (type === 'noCors') {
+                    addResult('Fetch no-cors', 'fetch mode:no-cors', 'PARTIAL', 'Opaque response — cannot read body');
+                    return;
+                }
+                return r.text();
+            }).then(function (html) {
+                if (!html) return;
+                var f = document.createElement('iframe');
+                f.srcdoc = html;
+                f.style.cssText = 'width:100%;height:200px;border:1px solid #333;';
+                sink.appendChild(f);
+                log('[FETCHED] Response: ' + html.length + ' chars — rendered in srcdoc');
+                addResult('Fetch+Render ' + type, 'fetch → srcdoc', 'LOADED', 'Content fetched and rendered locally (' + html.length + ' chars)');
+            }).catch(function (e) {
+                addResult('Fetch+Render ' + type, 'fetch', 'BLOCKED', e.message);
+            });
+        }
+
+        // ========== Test 7: Delayed Loading ==========
+        function testDelayed(ms) {
+            var url = getTarget();
+            log('[TEST] Delayed load (' + ms + 'ms)...');
+            var sink = document.getElementById('sink-delayed');
+            sink.innerHTML += '<div style="color:#ffaa00;padding:5px;">Loading in ' + (ms / 1000) + 's...</div>';
+            setTimeout(function () {
+                var f = makeIframe(url);
+                sink.appendChild(f);
+                monitorIframe(f, 'Delayed ' + (ms / 1000) + 's', 'setTimeout(' + ms + ') → iframe');
+            }, ms);
+        }
+
+        function testLazy() {
+            var url = getTarget();
+            log('[TEST] Lazy loading iframe');
+            var sink = document.getElementById('sink-delayed');
+            var f = document.createElement('iframe');
+            f.src = url;
+            f.loading = 'lazy';
+            f.style.cssText = 'width:100%;height:150px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'Lazy loading', 'loading="lazy"');
+        }
+
+        function testIntersectionObserver() {
+            var url = getTarget();
+            log('[TEST] IntersectionObserver triggered load');
+            var sink = document.getElementById('sink-delayed');
+            var placeholder = document.createElement('div');
+            placeholder.style.cssText = 'width:100%;height:150px;border:1px dashed #333;background:#0a0a0a;color:#666;display:flex;align-items:center;justify-content:center;';
+            placeholder.textContent = 'Scroll into view to trigger load...';
+            sink.appendChild(placeholder);
+            var observer = new IntersectionObserver(function (entries) {
+                if (entries[0].isIntersecting) {
+                    observer.disconnect();
+                    var f = makeIframe(url);
+                    placeholder.replaceWith(f);
+                    monitorIframe(f, 'IntersectionObserver', 'Loaded on scroll into view');
+                }
+            });
+            observer.observe(placeholder);
+            addResult('IntersectionObserver', 'lazy via observer', 'PENDING', 'Scroll down to trigger');
+        }
+
+        function testServiceWorker() {
+            log('[TEST] Service Worker intercept — requires HTTPS');
+            addResult('Service Worker', 'SW intercept', 'MANUAL', 'Requires HTTPS — test on HTTPS-enabled deployment');
+        }
+
+        // ========== Test 8: Navigation ==========
+        function testWindowOpen() {
+            var url = getTarget();
+            log('[TEST] window.open → ' + url);
+            try {
+                var w = window.open(url, '_blank');
+                addResult('window.open', 'window.open(_blank)', w ? 'OPENED' : 'BLOCKED', w ? 'Popup opened — check if content loaded' : 'Popup blocked');
+            } catch (e) { addResult('window.open', 'window.open', 'BLOCKED', e.message); }
+        }
+
+        function testAnchorClick() {
+            var url = getTarget();
+            log('[TEST] Anchor programmatic click');
+            var a = document.createElement('a');
+            a.href = url; a.target = '_blank'; a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            addResult('Anchor click()', 'a.click() target=_blank', 'FIRED', 'Click dispatched — check if new tab opened and loaded');
+        }
+
+        function testLocationAssign() {
+            var url = getTarget();
+            log('[TEST] location.assign — WARNING: will navigate away!');
+            addResult('location.assign', 'window.location = url', 'MANUAL', 'Uncomment in code to test — will navigate away from this page');
+            // Uncomment to actually test:
+            // window.location.assign(url);
+        }
+
+        function testFormAction() {
+            var url = getTarget();
+            log('[TEST] Form action POST');
+            var f = document.createElement('form');
+            f.method = 'POST'; f.action = url; f.target = '_blank'; f.style.display = 'none';
+            document.body.appendChild(f);
+            try { f.submit(); addResult('Form POST', 'form.submit() target=_blank', 'FIRED', 'Form submitted to restricted URL'); }
+            catch (e) { addResult('Form POST', 'form.submit()', 'BLOCKED', e.message); }
+        }
+
+        function testMetaRedirect() {
+            var url = getTarget();
+            log('[TEST] Meta refresh redirect via iframe');
+            var sink = document.getElementById('sink-delayed');
+            var f = document.createElement('iframe');
+            f.srcdoc = '<html><head><meta http-equiv="refresh" content="1;url=' + url + '"></head><body style="background:#000;color:#0f0;font-family:monospace;">Redirecting in 1s...</body></html>';
+            f.style.cssText = 'width:100%;height:100px;border:1px solid #333;';
+            sink.appendChild(f);
+            monitorIframe(f, 'Meta refresh', 'srcdoc → meta refresh → restricted URL');
+        }
+
+        // ========== Export ==========
+        function exportResults() {
+            var blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'restricted-bypass-results-' + Date.now() + '.json'; a.click();
+            log('[*] Results exported as JSON');
+        }
+
+        function exportCSV() {
+            var csv = 'Num,Technique,Method,Result,Reaction,Target,Timestamp\n';
+            results.forEach(function (r) {
+                csv += [r.num, '"' + r.technique + '"', '"' + r.method + '"', r.result, '"' + r.reaction + '"', '"' + r.target + '"', r.timestamp].join(',') + '\n';
+            });
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'restricted-bypass-results-' + Date.now() + '.csv'; a.click();
+            log('[*] Results exported as CSV');
+        }
+
+        // CSP violation listener
+        document.addEventListener('securitypolicyviolation', function (e) {
+            log('[CSP] ' + e.violatedDirective + ' → ' + e.blockedURI);
+            addResult('CSP Violation', e.blockedURI, 'BLOCKED', e.violatedDirective);
+        });
+    </script>
+</body>
+</html>

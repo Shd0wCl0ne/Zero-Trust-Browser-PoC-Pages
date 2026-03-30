@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Error | VeryGoodVault</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .error-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(239, 68, 68, 0.1);
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 80px;
+            color: #ef4444;
+            margin-bottom: 20px;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .error-title {
+            font-size: 36px;
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .error-code {
+            display: inline-block;
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid #fecaca;
+        }
+        
+        .error-message {
+            font-size: 18px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .troubleshooting {
+            background: #fef3c7;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .troubleshooting h3 {
+            color: #92400e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .troubleshooting ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #92400e;
+        }
+        
+        .troubleshooting li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .security-alert {
+            background: #fef2f2;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #fecaca;
+            text-align: left;
+        }
+        
+        .security-alert h4 {
+            color: #dc2626;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .transaction-details {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+            border-left: 4px solid #6b7280;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2963d1 0%, #1d4ed8 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 99, 209, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 2px solid #fecaca;
+        }
+        
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+        
+        .support-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .support-contact {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0f9ff;
+            padding: 15px 25px;
+            border-radius: 25px;
+            color: #0369a1;
+            font-weight: 600;
+            margin-top: 15px;
+            border: 1px solid #bae6fd;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .countdown {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 20px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .status-declined {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-retry {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-container">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='50'%3E%3Ctext x='10' y='35' font-family='Arial' font-size='24' fill='%232963d1'%3EVeryGoodVault%3C/text%3E%3C/svg%3E" 
+                     alt="VeryGoodVault Secure Payments" class="logo">
+                <div class="verified">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Security Alert</span>
+                </div>
+            </div>
+            <div class="contact">
+                <i class="fas fa-phone"></i> 1-800-VGV-PAY
+                <span class="secure-connection">
+                    <i class="fas fa-lock"></i> Secure Connection
+                </span>
+            </div>
+        </header>
+        
+        <div class="error-container">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            
+            <h1 class="error-title">Payment Could Not Be Processed</h1>
+            
+            <div class="error-code" id="errorCode">ERROR_2024_DECLINED</div>
+            
+            <div class="status-indicator status-declined">
+                <i class="fas fa-times-circle"></i>
+                Transaction Declined by Issuing Bank
+            </div>
+            
+            <p class="error-message" id="errorMessage">
+                We were unable to process your payment. This could be due to insufficient funds, 
+                incorrect card details, or security restrictions from your bank.
+            </p>
+            
+            <div class="security-alert">
+                <h4>
+                    <i class="fas fa-shield-exclamation"></i>
+                    Security Notice
+                </h4>
+                <p style="color: #7f1d1d; margin: 0; font-size: 14px;">
+                    For your protection, this transaction has been flagged for additional verification. 
+                    No charges have been made to your account. Please try again or contact your bank 
+                    if you believe this is an error.
+                </p>
+            </div>
+            
+            <div class="troubleshooting">
+                <h3>
+                    <i class="fas fa-tools"></i>
+                    Troubleshooting Steps
+                </h3>
+                <ul>
+                    <li>Verify your card number, expiration date, and security code</li>
+                    <li>Ensure your billing address matches the address on file with your bank</li>
+                    <li>Check with your bank to ensure international transactions are enabled</li>
+                    <li>Try a different payment method or card</li>
+                    <li>Contact your bank to remove any temporary holds</li>
+                </ul>
+            </div>
+            
+            <div class="transaction-details">
+                <h3 style="margin-bottom: 20px; color: #1f2937;">
+                    <i class="fas fa-info-circle"></i> Transaction Details
+                </h3>
+                
+                <div class="detail-row">
+                    <span style="color: #4b5563;">Attempt Time:</span>
+                    <span id="attemptTime" style="color: #1f2937; font-family: 'Courier New', monospace;">
+                        Loading...
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span style="color: #4b5563;">Reference ID:</span>
+                    <span id="referenceId" style="color: #1f2937; font-family: 'Courier New', monospace;">
+                        Loading...
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span style="color: #4b5563;">Amount:</span>
+                    <span style="color: #1f2937; font-weight: 600;">$107.99 USD</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span style="color: #4b5563;">Status:</span>
+                    <span style="color: #dc2626; font-weight: 600;">
+                        <i class="fas fa-times-circle"></i> Declined
+                    </span>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <a href="index.html" class="btn btn-primary" id="retryPayment">
+                    <i class="fas fa-redo"></i> Try Payment Again
+                </a>
+                <a href="#" class="btn btn-secondary" id="useDifferentCard">
+                    <i class="fas fa-credit-card"></i> Use Different Card
+                </a>
+                <a href="#" class="btn btn-danger" id="cancelTransaction">
+                    <i class="fas fa-ban"></i> Cancel Transaction
+                </a>
+            </div>
+            
+            <div class="support-section">
+                <p style="color: #6b7280; margin-bottom: 15px;">
+                    <i class="fas fa-headset"></i>
+                    Need immediate assistance? Our payment specialists are available 24/7
+                </p>
+                
+                <div class="support-contact">
+                    <i class="fas fa-phone-volume"></i>
+                    <div>
+                        <div style="font-size: 12px; color: #0c4a6e;">Call Support</div>
+                        <div>1-800-VGV-PAY (1-800-848-4729)</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; font-size: 14px; color: #6b7280;">
+                    <i class="fas fa-envelope"></i>
+                    Email: <a href="mailto:support@verygoodvault.com" style="color: #2963d1;">support@verygoodvault.com</a>
+                    | Response time: Less than 1 hour
+                </div>
+            </div>
+            
+            <div class="countdown">
+                <i class="fas fa-clock"></i> 
+                This error page will expire in 
+                <span id="pageExpiryCountdown">5</span> minutes for security reasons.
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>
+                <i class="fas fa-copyright"></i> 2024 VeryGoodVault Payments. All rights reserved.
+                <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | 
+                <a href="#">Security</a> | <a href="#">PCI Compliance</a>
+            </p>
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
+                <i class="fas fa-exclamation-circle"></i>
+                This is a secure payment portal. All information is encrypted and protected.
+                Never share your password or security code with anyone.
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get error details from URL or generate them
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorCode = urlParams.get('code') || generateErrorCode();
+            const errorMessage = getErrorMessage(errorCode);
+            
+            // Generate reference details
+            const referenceId = 'REF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            const attemptTime = new Date().toLocaleString();
+            
+            // Update DOM elements
+            document.getElementById('errorCode').textContent = errorCode;
+            document.getElementById('errorMessage').textContent = errorMessage;
+            document.getElementById('referenceId').textContent = referenceId;
+            document.getElementById('attemptTime').textContent = attemptTime;
+            
+            // Page expiry countdown
+            let expiryMinutes = 5;
+            let expirySeconds = expiryMinutes * 60;
+            const expiryElement = document.getElementById('pageExpiryCountdown');
+            
+            const expiryInterval = setInterval(() => {
+                expirySeconds--;
+                
+                const minutes = Math.floor(expirySeconds / 60);
+                const seconds = expirySeconds % 60;
+                
+                expiryElement.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+                
+                if (expirySeconds <= 0) {
+                    clearInterval(expiryInterval);
+                    showExpiryWarning();
+                }
+                
+                // Blink warning when less than 1 minute
+                if (expirySeconds <= 60) {
+                    expiryElement.classList.add('pulse');
+                    expiryElement.style.color = '#dc2626';
+                    expiryElement.style.fontWeight = 'bold';
+                }
+            }, 1000);
+            
+            // Retry payment button
+            document.getElementById('retryPayment').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Store retry attempt
+                const retryHistory = JSON.parse(localStorage.getItem('vgv_retry_attempts') || '[]');
+                retryHistory.push({
+                    timestamp: new Date().toISOString(),
+                    error_code: errorCode,
+                    reference_id: referenceId
+                });
+                
+                localStorage.setItem('vgv_retry_attempts', JSON.stringify(retryHistory));
+                
+                // Redirect back to payment form
+                window.location.href = 'index.html?retry=true&ref=' + referenceId;
+            });
+            
+            // Use different card button
+            document.getElementById('useDifferentCard').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Clear saved card data
+                localStorage.removeItem('vgv_card_data');
+                
+                // Redirect with card reset flag
+                window.location.href = 'index.html?reset_card=true&ref=' + referenceId;
+            });
+            
+            // Cancel transaction button
+            document.getElementById('cancelTransaction').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (confirm('Are you sure you want to cancel this transaction? This action cannot be undone.')) {
+                    // Store cancellation
+                    const cancelledTransactions = JSON.parse(localStorage.getItem('vgv_cancelled') || '[]');
+                    cancelledTransactions.push({
+                        timestamp: new Date().toISOString(),
+                        reference_id: referenceId,
+                        error_code: errorCode
+                    });
+                    
+                    localStorage.setItem('vgv_cancelled', JSON.stringify(cancelledTransactions));
+                    
+                    // Redirect to homepage
+                    window.location.href = 'index.html?cancelled=true';
+                }
+            });
+            
+            // Send analytics
+            sendAnalyticsEvent('payment_error', {
+                error_code: errorCode,
+                reference_id: referenceId,
+                amount: 107.99
+            });
+            
+            // Check for multiple failed attempts
+            checkFailedAttempts();
+        });
+        
+        function generateErrorCode() {
+            const codes = [
+                'DECLINED_001', 'SECURITY_HOLD_002', 'INSUFFICIENT_FUNDS_003',
+                'EXPIRED_CARD_004', 'INVALID_CVV_005', 'BANK_REJECTED_006'
+            ];
+            
+            return codes[Math.floor(Math.random() * codes.length)];
+        }
+        
+        function getErrorMessage(code) {
+            const messages = {
+                'DECLINED_001': 'Your payment was declined by the card issuer. Please contact your bank or try a different payment method.',
+                'SECURITY_HOLD_002': 'Additional security verification is required. This transaction has been temporarily held for your protection.',
+                'INSUFFICIENT_FUNDS_003': 'Insufficient funds available. Please check your account balance or use a different payment method.',
+                'EXPIRED_CARD_004': 'The card has expired. Please update your card details or use a different payment method.',
+                'INVALID_CVV_005': 'The security code is incorrect. Please verify the 3-4 digit code on your card and try again.',
+                'BANK_REJECTED_006': 'Your bank has rejected this transaction. Please contact your bank to authorize international payments.'
+            };
+            
+            return messages[code] || 'An unexpected error occurred. Please try again or contact support.';
+        }
+        
+        function showExpiryWarning() {
+            const warning = document.createElement('div');
+            warning.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: #dc2626;
+                color: white;
+                padding: 15px;
+                text-align: center;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideDown 0.3s ease-out;
+            `;
+            
+            warning.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                This error page has expired for security reasons. You will be redirected in 10 seconds.
+            `;
+            
+            document.body.appendChild(warning);
+            
+            setTimeout(() => {
+                window.location.href = 'index.html?session_expired=true';
+            }, 10000);
+        }
+        
+        function checkFailedAttempts() {
+            const failedAttempts = JSON.parse(localStorage.getItem('vgv_failed_attempts') || '[]');
+            
+            // Add current attempt
+            failedAttempts.push({
+                timestamp: new Date().toISOString(),
+                page: 'error.html'
+            });
+            
+            // Keep only last 5 attempts
+            if (failedAttempts.length > 5) {
+                failedAttempts.splice(0, failedAttempts.length - 5);
+            }
+            
+            localStorage.setItem('vgv_failed_attempts', JSON.stringify(failedAttempts));
+            
+            // If too many attempts, show warning
+            if (failedAttempts.length >= 3) {
+                const warning = document.createElement('div');
+                warning.className = 'security-alert';
+                warning.innerHTML = `
+                    <h4><i class="fas fa-user-shield"></i> Multiple Failed Attempts Detected</h4>
+                    <p style="color: #7f1d1d; margin: 0; font-size: 14px;">
+                        We've detected multiple payment attempts. For security reasons, please contact 
+                        support if you continue experiencing issues.
+                    </p>
+                `;
+                
+                document.querySelector('.error-container').insertBefore(
+                    warning, 
+                    document.querySelector('.troubleshooting')
+                );
+            }
+        }
+        
+        function sendAnalyticsEvent(event, data) {
+            const analyticsData = {
+                event: event,
+                ...data,
+                timestamp: new Date().toISOString(),
+                page_url: window.location.href
+            };
+            
+            console.log('[Analytics Error]', analyticsData);
+            
+            // In production, send to error tracking service
+            // fetch('/api/errors', { method: 'POST', body: JSON.stringify(analyticsData) });
+        }
+    </script>
+</body>
+</html>

