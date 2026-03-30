@@ -17,7 +17,7 @@ $CONFIG = [
     ],
     'discord_webhook' => [
         'enabled' => false,
-        'url' => 'https://webhook.site/4ad0f29c-6ec8-4d07-84e5-19f34a9b7ea8'
+        'url' => 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef'
     ]
 ];
 
